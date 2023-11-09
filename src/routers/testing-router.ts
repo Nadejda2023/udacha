@@ -4,7 +4,7 @@ import { AuthModel, BlogModel, CommentModel, DeviceModel, PostModel, RateLimitMo
 
 export const testingRouter = Router()
 
-testingRouter.delete('/all-data',
+testingRouter.delete('testing/all-data',
 async (req: Request, res: Response) => {
     await  Promise.all([
       BlogModel.deleteMany({}),
