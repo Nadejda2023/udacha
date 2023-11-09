@@ -1,8 +1,5 @@
 import { Request, Response, Router,  } from "express"
-import { postsRepository} from "../repositories/posts_db__repository";
-import { usersTwoRepository } from "../repositories/usersRepository";
-import { commentQueryRepository } from "../repositories/commentQueryRepository";
-import { BlogModel, CommentModel, PostModel, UserModel } from "../db/db";
+import { AuthModel, BlogModel, CommentModel, DeviceModel, PostModel, RateLimitModel, UserModel } from "../db/db";
 
 
 export const testingRouter = Router()
@@ -13,7 +10,11 @@ async (req: Request, res: Response) => {
       BlogModel.deleteMany({}),
       PostModel.deleteMany({}),
       UserModel.deleteMany({}),
-      CommentModel.deleteMany({}),])
+      CommentModel.deleteMany({}),
+      DeviceModel.deleteMany({}),
+      RateLimitModel.deleteMany({}),
+      AuthModel.deleteMany({}),
+    ])
     
     //await authQueryRepository.deleteAllAuth()
    return res.status(204).send('All data is deleted')
