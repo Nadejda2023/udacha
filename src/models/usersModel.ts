@@ -18,8 +18,7 @@ import { WithId } from "mongodb"
         createdAt: string,
        
       }
-      export type UsersModel =
-      WithId<{ 
+      export type UsersModel = { 
         id: string,
         login: string,
         email: string,
@@ -29,7 +28,7 @@ import { WithId } from "mongodb"
         emailConfirmation : EmailConfirmationType,
         //refreshTokenBlackList: string[] 
 
-      }>
+      }
       
       export type EmailConfirmationType = { // usera 
         isConfirmed: boolean,

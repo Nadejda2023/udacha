@@ -1,8 +1,7 @@
-import { ObjectId } from "mongodb";
-import { UsersModel, UsersModelSw } from "../models/usersModel";
+import { UsersModel } from "../models/usersModel";
 import jwt from 'jsonwebtoken'
 import { accessTokenSecret1, refreshTokenSecret2, settings } from "../setting";
-import { usersCollection } from "../db/db";
+import { UserModel } from "../db/db";
 import { DeviceViewModel } from "../models/deviceModel";
 
 
@@ -48,7 +47,7 @@ async getLastActiveDate(token: string) {
         }
     },
     async  isTokenInvalidated(token: string) {
-        const result = await usersCollection.findOne({ token });
+        const result = await UserModel.findOne({ token });
         return result;
       },
     async verifyRefreshToken(refreshToken: string, refreshTokenSecret: string) {

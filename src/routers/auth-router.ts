@@ -4,13 +4,13 @@ import { jwtService } from '../_application/jwt-service'
 import { authMiddleware } from '../middlewares/auth-middleware'
 import { authService } from '../domain/auth-service'
 import { UsersInputValidation, emailConfiResValidation, registrationComfiValidation } from '../middlewares/usersvalidation'
-import { deviceCollection, usersCollection } from '../db/db'
 import { usersQueryRepository } from '../repositories/usersQuery_Repository'
 import { randomUUID } from 'crypto'
 import { customRateLimit } from '../middlewares/middleware_rateLimit'
 import { DeviceDbModel, DeviceViewModel } from '../models/deviceModel'
 import { ObjectId } from 'mongodb'
 import { deviceQueryRepository } from '../repositories/deviceQueryRepository'
+import { DeviceModel } from '../db/db'
 
 
 export const authRouter = Router({})
@@ -33,7 +33,7 @@ async ( req: Request, res: Response) => {
             deviceId,
             userId
         }
-        await deviceCollection.insertOne(newDevice)
+        await DeviceModel.insertMany([newDevice])
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: true
@@ -82,7 +82,7 @@ async (req: Request, res: Response) => {
            return res.status(401).json({ message: 'no user' });
           }
 
-        const device = await deviceCollection.findOne({deviceId: isValid.deviceId})
+        const device = await DeviceModel.findOne({deviceId: isValid.deviceId})
 
         if(!device){
             return res.status(401).json({ message: 'no device' });
@@ -96,7 +96,7 @@ async (req: Request, res: Response) => {
         
         const newTokens = await authService.refreshTokens(user.id, device.deviceId); 
         const newLastActiveDate = await jwtService.getLastActiveDate(newTokens.newRefreshToken)
-        await deviceCollection.updateOne({ deviceId: device.deviceId },{ $set: {lastActiveDate: newLastActiveDate}})
+        await DeviceModel.updateOne({ deviceId: device.deviceId },{ $set: {lastActiveDate: newLastActiveDate}})
          
 
 
@@ -198,7 +198,7 @@ async (req: Request, res: Response) => {
         const user = await usersQueryRepository.findUserById(isValid.userId);
         if(!user) return res.sendStatus(401);
 
-        const device = await deviceCollection.findOne({deviceId: isValid.deviceId})
+        const device = await DeviceModel.findOne({deviceId: isValid.deviceId})
         if(!device){
             return res.status(401).json({ message: 'Invalid refresh token' });
             }

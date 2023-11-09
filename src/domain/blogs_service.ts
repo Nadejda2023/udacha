@@ -1,11 +1,9 @@
-
-import { blogsCollection, db } from "../db/db";
 import {  BlogsViewDBModel, BlogsViewModel, PaginatedBlog, } from "../models/blogsModel";
 import { randomUUID } from "crypto";
 import { blogsRepository } from "../repositories/blogs_db__repository";
 
 
-//const dbBlogs =  client.db("project")
+
 
 
 export const blogsService = {

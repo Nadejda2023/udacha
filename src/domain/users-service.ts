@@ -3,11 +3,10 @@ import * as bcrypt from 'bcrypt'
 import { randomUUID } from "crypto"
 import {  usersTwoRepository } from "../repositories/usersRepository"
 import { usersQueryRepository } from "../repositories/usersQuery_Repository"
-import { usersCollection } from "../db/db"
 import { log } from "console"
 import add from "date-fns/add"
 import { emailAdapter } from "../adapters/email-adapter"
-import { authService } from "./auth-service"
+import { UserModel } from "../db/db"
 
 
 
@@ -34,7 +33,7 @@ export const usersService = {
                 
                     
             },
-            refreshTokenBlackList:[]
+            //refreshTokenBlackList:[]
          }
         await usersQueryRepository.createUser({...newUser})
          console.log('user:', newUser)
@@ -57,7 +56,7 @@ export const usersService = {
 
 // to do
         async findUserById(id:string): Promise<UsersModel | null> {
-            const foundedUser = await usersCollection.findOne({id: id},{projection: {_id: 0, passwordSalt: 0, passwordHash: 0, emailConfirmation: 0, refreshTokenBlackList: 0}})
+            const foundedUser = await UserModel.findOne({id: id},{projection: {_id: 0, passwordSalt: 0, passwordHash: 0, emailConfirmation: 0, refreshTokenBlackList: 0}})
             
             if(!foundedUser){
                 return null

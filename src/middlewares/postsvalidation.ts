@@ -1,8 +1,6 @@
-import { body, param } from "express-validator"
+import { body } from "express-validator"
 import { inputValidationErrors } from "./inputvalidationmiddleware"
-import { blogsCollection } from "../db/db"
-import { ObjectId } from "mongodb"
-//import { blogsRepository } from "../repositories/blogs-in-memory1-repository"
+import { BlogModel } from "../db/db"
 
 
 
@@ -36,22 +34,12 @@ const blogIdValidation =  body('blogId')
                                         .trim()
                                         //.isEmpty()
                                         .custom(async (id: string) => {
-                                            const blog = await blogsCollection.findOne({id: id})
+                                            const blog = await BlogModel.findOne({id: id})
                                             if(!blog) throw new Error('blogId wrong')
                                             return true              
                                     })
 
 
-// const blogIdValidationInParams =  param('blogId')
-//     .isString()
-//     .withMessage('Must be string')
-//     .trim()
-//     //.isEmpty()
-//     .custom(async (id: string) => {
-//         const blog = await blogsCollection.findOne({id: id})
-//         if(!blog) throw new Error('blogId wrong')
-//         return true              
-// })
 
 export const createPostValidation = 
     [titleValidation, shortDescriptionValidation, contentValidation, blogIdValidation, inputValidationErrors]

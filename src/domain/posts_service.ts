@@ -1,5 +1,4 @@
 import { randomUUID } from "crypto"
-import { blogsCollection, db, postsCollection } from "../db/db"
 import { BlogsViewModel } from "../models/blogsModel"
 import { PostViewDBModel, PostViewModel } from "../models/postsModel"
 import { postsRepository } from "../repositories/posts_db__repository"

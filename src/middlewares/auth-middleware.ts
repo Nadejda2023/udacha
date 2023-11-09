@@ -1,6 +1,6 @@
 import {Response, Request, NextFunction } from "express";
 import { jwtService } from "../_application/jwt-service";
-import { usersCollection } from "../db/db";
+import { UserModel } from "../db/db";
 
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
@@ -19,7 +19,7 @@ if(typeAuth !== 'Bearer') return res.sendStatus(401);
         res.sendStatus(401)
         return  
     }
-    const user = await usersCollection.findOne({id: userId})
+    const user = await UserModel.findOne({id: userId})
     
     if(!user) {
         res.sendStatus(401)
