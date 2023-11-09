@@ -1,23 +1,22 @@
 import { WithId } from "mongodb"
-import { commentCollection, postsCollection } from "../db/db"
+import { CommentModel, PostModel } from "../db/db"
 import { TPagination } from "../hellpers/pagination"
-import { PaginatedPost, PostViewModel } from "../models/postsModel"
+import { PaginatedPost, PostViewDBModel, PostViewModel } from "../models/postsModel"
 import { PaginatedCommentViewModel, commentDBViewModel, commentViewModel } from "../models/commentModels"
-import { postsRepository } from "./posts_db__repository"
 import { randomUUID } from "crypto"
-import { userInfo } from "os"
+
 
 export const postsQueryRepository = {
     async findPosts(pagination: TPagination):
-    Promise<PaginatedPost<PostViewModel>> {
+    Promise<PaginatedPost<PostViewDBModel>> {
        const filter = {name: { $regex :pagination.searchNameTerm, $options: 'i'}}
-       const result : WithId<WithId<PostViewModel>>[] = await postsCollection.find(filter, {projection: {_id: 0}})
+       const result : WithId<WithId<PostViewDBModel>>[] = await PostModel.find(filter, {projection: {_id: 0}})
    
    .sort({[pagination.sortBy]: pagination.sortDirection})
    .skip(pagination.skip)
    .limit(pagination.pageSize)
-   .toArray()
-       const totalCount: number = await postsCollection.countDocuments(filter)
+   .lean()
+       const totalCount: number = await PostModel.countDocuments(filter)
        const pageCount: number = Math.ceil(totalCount / pagination.pageSize)
 
 
@@ -41,25 +40,26 @@ export const postsQueryRepository = {
             postId
 }
   
-       await commentCollection.insertOne({...createCommentForPost})
+       await CommentModel.insertMany([{...createCommentForPost}])
       return  {
         id: createCommentForPost.id,
         content: createCommentForPost.content,
         commentatorInfo: createCommentForPost.commentatorInfo,
-        createdAt: createCommentForPost.createdAt
+        createdAt: createCommentForPost.createdAt,
+        postId: createCommentForPost.postId
 }
   
   },
   async getAllCommentsForPost(pagination: TPagination):
     Promise<PaginatedCommentViewModel<commentDBViewModel>> {
        const filter = {name: { $regex :pagination.searchNameTerm, $options: 'i'}}
-       const result : WithId<WithId<commentDBViewModel>>[] = await commentCollection.find(filter, {projection: {_id: 0}})
+       const result : WithId<WithId<commentDBViewModel>>[] = await CommentModel.find(filter, {projection: {_id: 0}})
    
    .sort({[pagination.sortBy]: pagination.sortDirection})
    .skip(pagination.skip)
    .limit(pagination.pageSize)
-   .toArray()
-       const totalCount: number = await commentCollection.countDocuments(filter)
+   .lean()
+       const totalCount: number = await CommentModel.countDocuments(filter)
        const pageCount: number = Math.ceil(totalCount / pagination.pageSize)
 
 

@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb"
+import {WithId } from "mongodb"
 
 export type PostViewInputModel = {
     id: string,
@@ -18,15 +18,15 @@ export type PostViewModel = {
     createdAt: string,
   }
 
-  export type PostViewDBModel = {
-    _id: ObjectId,
+  export type PostViewDBModel = WithId<{ 
+    id: string,
     title: string,
     shortDescription: string,
     content: string,
     blogId: string,
     blogName: string,
     createdAt: string,
-  }
+  }>
 
   export type PaginatedPost<T> = {
     pagesCount: number,

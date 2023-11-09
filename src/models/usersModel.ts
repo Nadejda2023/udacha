@@ -1,3 +1,4 @@
+import { WithId } from "mongodb"
 
 
     export type PaginatedUser<T> = {
@@ -18,7 +19,7 @@
        
       }
       export type UsersModel =
-      {
+      WithId<{ 
         id: string,
         login: string,
         email: string,
@@ -26,9 +27,10 @@
         passwordSalt: string,
         passwordHash: string,
         emailConfirmation : EmailConfirmationType,
-        refreshTokenBlackList: string[] 
+        //refreshTokenBlackList: string[] 
 
-      }
+      }>
+      
       export type EmailConfirmationType = { // usera 
         isConfirmed: boolean,
         confirmationCode: string,

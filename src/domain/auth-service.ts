@@ -3,14 +3,11 @@ import { emailAdapter } from "../adapters/email-adapter";
 import {  usersTwoRepository } from "../repositories/usersRepository";
 import * as bcrypt from 'bcrypt'
 import add from "date-fns/add";
-import { deviceCollection, usersCollection } from "../db/db";
 import jwt from 'jsonwebtoken'
-
 import { accessTokenSecret1, refreshTokenSecret2 } from "../setting";
-import { jwtService } from "../_application/jwt-service";
-import { UsersModel, UsersModelSw } from "../models/usersModel";
-import {Request, Response, Router} from 'express'
-import { DeviceDbModel } from "../models/deviceModel";
+import { UsersModel} from "../models/usersModel";
+import { UserModel } from "../db/db";
+
 
 
 
@@ -36,7 +33,7 @@ export const authService = {
     },
     async findUserByID(userId: string): Promise<UsersModel | null> {
       try {
-        const user = await usersCollection.findOne({ id: userId })
+        const user = await UserModel.findOne({ id: userId })
         return user;
       } catch (error) {
         console.error('Error finding user by ID:', error);

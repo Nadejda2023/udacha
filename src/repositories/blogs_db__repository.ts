@@ -1,13 +1,10 @@
-
-import { ObjectId } from "mongodb";
-import { blogsCollection, db } from "../db/db";
+import { BlogModel, db } from "../db/db";
 import {  BlogsViewDBModel, BlogsViewModel, PaginatedBlog, } from "../models/blogsModel";
-import { randomUUID } from "crypto";
-import { body } from "express-validator/src/middlewares/validation-chain-builders";
 
 
 
-//const dbBlogs =  client.db("project")
+
+
 
 
 export const blogsRepository = {
@@ -18,18 +15,18 @@ export const blogsRepository = {
     if (title) {
         filter.title = {$regex: title}
     }
-    return blogsCollection.find((filter), {projection:{_id:0}}).toArray()
+    return BlogModel.find((filter), {projection:{_id:0}}).lean()
      
     },
 
    async findBlogById(id: string): Promise<BlogsViewModel | null> {
-        return blogsCollection.findOne({id: id}, {projection:{_id:0}}) 
+        return BlogModel.findOne({id: id}, {projection:{_id:0}}) 
 
     },
     
     async createBlog(newBlog: BlogsViewModel): Promise<BlogsViewDBModel| null > {
-        await blogsCollection.insertOne({...newBlog})
-        const newBlogId = await blogsCollection.findOne({id:newBlog.id}, {projection:{_id:0}} )
+        await BlogModel.insertMany([{...newBlog}])
+        const newBlogId = await BlogModel.findOne({id:newBlog.id}, {projection:{_id:0}} )
         return newBlogId
     }, 
 
@@ -37,23 +34,24 @@ export const blogsRepository = {
     async updateBlog(id: string, name: string, description: string, website: string): Promise< boolean | undefined> {
         
            
-        const result = await blogsCollection.updateOne({id: id},{ $set:{name: name, description: description, websiteUrl: website}})
+        const result = await BlogModel.updateOne({id: id},{ $set:{name, description, website}})
         return result.matchedCount === 1
         
     
     },
 
     async deleteBlog(id: string) {
-        //const filter = {_id:id}
-         const result = blogsCollection.deleteOne({id:id})
+        
+         const result = BlogModel.deleteOne({id:id})
 
          return (await result).deletedCount === 1
         
     },
 
     async deleteAllBlogs(): Promise<boolean> {
-        const result = await blogsCollection.deleteMany({})
-        try { await blogsCollection.deleteMany({})
+
+        try { const result = await BlogModel.deleteMany({})
+        
             return result.acknowledged
         }catch(e){
                 return false

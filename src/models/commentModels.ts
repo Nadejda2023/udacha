@@ -1,3 +1,4 @@
+import { WithId } from "mongodb"
 
 
 export type commentViewModel =
@@ -15,10 +16,10 @@ export type commentViewModel =
   }
 
   export type commentDBViewModel =
-{
-  
+  { 
   id: string,
   content: string,
+  postId: string,
   commentatorInfo: {
     userId: string
   userLogin: string

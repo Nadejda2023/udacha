@@ -1,5 +1,5 @@
 import { WithId } from "mongodb"
-import { commentCollection, postsCollection } from "../db/db"
+import { CommentModel} from "../db/db"
 import { TPagination } from "../hellpers/pagination"
 import { PaginatedCommentViewModel, commentDBViewModel, commentViewModel } from "../models/commentModels"
 
@@ -10,13 +10,13 @@ export const commentQueryRepository = {
     async getAllCommentsForPost(postId:string, pagination:TPagination): // postId:string
     Promise<PaginatedCommentViewModel<commentDBViewModel>> {
         //const filter = {name: { $regex :pagination.searchNameTerm, $options: 'i'}}
-        const result : WithId<WithId<commentDBViewModel>>[] = await commentCollection.find({postId: postId}, {projection: {_id: 0, postId: 0}}) //filter
+        const result : WithId<WithId<commentDBViewModel>>[] = await CommentModel.find({postId: postId}, {projection: {_id: 0, postId: 0}}) //filter
     
     .sort({[pagination.sortBy]: pagination.sortDirection})
     .skip(pagination.skip)
     .limit(pagination.pageSize)
-    .toArray()
-        const totalCount: number = await commentCollection.countDocuments({postId})
+    .lean()
+        const totalCount: number = await CommentModel.countDocuments({postId})
         const pageCount: number = Math.ceil(totalCount / pagination.pageSize)
 
 
@@ -32,13 +32,13 @@ export const commentQueryRepository = {
    
     
     async findCommentById(commentId: string): Promise<commentDBViewModel | null> {
-        return commentCollection.findOne({id: commentId}, {projection: {_id: 0, postId: 0}})
+        return CommentModel.findOne({id: commentId}, {projection: {_id: 0, postId: 0}})
 
     },
 
 
     async deleteAllComment(): Promise<boolean> {
-        const result = await commentCollection.deleteMany({})
+        const result = await CommentModel.deleteMany({})
       
         return result.acknowledged  === true
     
@@ -46,14 +46,14 @@ export const commentQueryRepository = {
     },
 
     async updateComment(commentId: string, content: string ) : Promise<commentDBViewModel | undefined | boolean> {
-        let foundComment = await commentCollection.findOne({id: commentId})
+        let foundComment = await CommentModel.findOne({id: commentId})
         if(foundComment){
-        const result = await commentCollection.updateOne({id: commentId},{ $set:{content: content}}) //comentatorInfo: comentatorInfo
+        const result = await CommentModel.updateOne({id: commentId},{ $set:{content: content}}) //comentatorInfo: comentatorInfo
         return result.matchedCount === 1
         }
     },
     async deleteComment(commentId: string){
-    const result = await commentCollection.deleteOne({id: commentId})
+    const result = await CommentModel.deleteOne({id: commentId})
     return  result.deletedCount === 1
  }
 }

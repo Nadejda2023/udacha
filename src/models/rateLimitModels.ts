@@ -1,4 +1,4 @@
-export type rateLimitDBModel =
+export type RateLimitDBModel =
 {
     IP : string,
     URL: string,
