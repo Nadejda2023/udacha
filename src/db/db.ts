@@ -17,7 +17,7 @@ import { MongoClient } from 'mongodb';
 
 
 const url = process.env.MONGO_URL || "mongodb://0.0.0.0:27017";
-let dbName = "mongoose-example"
+//let dbName = "mongoose-example"
 console.log('url:', url)
 if(!url) {
   throw new Error('! Url doesn\'t found')
@@ -127,7 +127,7 @@ export const RateLimitModel = mongoose.model('rateLimit', RateLimitSchema);
 export async function runDB() {
   try{
     await client.connect();
-    await mongoose.connect(url + '/' + dbName);
+    await mongoose.connect(url);
     //await client.db().command({ ping:1 });
     console.log("Connected successfully to mongo server");
 
