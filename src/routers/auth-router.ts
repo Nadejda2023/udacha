@@ -46,6 +46,16 @@ async ( req: Request, res: Response) => {
 
 })
 
+authRouter.post('/password-recovery',
+customRateLimit,
+async ( req: Request, res: Response) => {
+  
+    })
+
+
+
+
+
 authRouter.get('/me', 
 authMiddleware,
 async (req: Request, res: Response) => {
@@ -60,6 +70,12 @@ async (req: Request, res: Response) => {
     )
   }
  })
+
+ authRouter.post('/new-password',
+customRateLimit,
+async ( req: Request, res: Response) => {
+  
+    })
  
  authRouter.post('/refresh-token',
  async (req: Request, res: Response) => {
