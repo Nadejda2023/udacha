@@ -53,13 +53,9 @@ export const emailValidation2 = body('email')
                                              .withMessage('Must be string')
                                              .trim()
                                              //.matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)
-                                             .custom(async (email) => {
-                                                 const user = await usersTwoRepository.findUserByEmail(email);
-                                                 if(!user){
-                                                     throw new Error("User with this mail not founded")
-                                                 }
-                                                 return true
-                                              })                                             
+                                             
+                                             
+                                                                                   
 
 
  const codeValidation = body('code')
