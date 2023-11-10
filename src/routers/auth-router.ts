@@ -14,6 +14,7 @@ import { DeviceModel, UserModel } from '../db/db'
 import { emailAdapter } from '../adapters/email-adapter'
 import addMinutes from 'date-fns/addMinutes'
 import { forCreateNewPasswordValidation } from '../middlewares/authres'
+import { id } from 'date-fns/locale'
 
 
 export const authRouter = Router({})
@@ -52,21 +53,18 @@ async ( req: Request, res: Response) => {
 authRouter.post('/password-recovery',
 emailConfiResValidation,
 customRateLimit,
-async ( req: Request, res: Response) => {
-   const {email} = req.body.email
-   const user = await usersQueryRepository.findUserByEmail(email)
-   if(user){
+async (req: Request, res: Response) => {
+  const email = req.body.email;
+  const user = await usersQueryRepository.findUserByEmail(email);
+  if (user) {
     const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
-    //const expirationTime = addMinutes(new Date(), 15);
-    await UserModel.updateOne({id : user.id}, { $set: {recoveryCode: recoveryCode}})
-    await emailAdapter.sendEmailWithRecoveryCode(user.email,  recoveryCode)
-    res.status(204).json({ message: 'recoveryCode send on your mail' });
-   } else {
-    res.status(204).json({ message: 'Ok'});
-   }
-  
-    })
-
+    await UserModel.updateOne({ id: user.id }, { $set: { recoveryCode: recoveryCode } });
+    await emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode);
+    res.status(204).json({ message: 'recoveryCode sent to your mail' });
+  } else {
+    res.status(204).json({ message: 'Ok' });
+  }
+});
 
 
 
@@ -90,8 +88,9 @@ async (req: Request, res: Response) => {
  forCreateNewPasswordValidation,
   customRateLimit,
   async ( req: Request, res: Response) => {
-  const { newPassword, recoveryCode, userId } = req.body;
-  const result = await usersService.resetPasswordWithRecoveryCode(userId, newPassword, recoveryCode);
+  const { newPassword, recoveryCode } = req.body;
+  const user = await UserModel.findOne({ recoveryCode });
+  const result = await usersService.resetPasswordWithRecoveryCode(user?.id, newPassword, recoveryCode);
   if (result.success) {
     res.status(204).json({ message: 'Password reset successfully' });
   } else {
