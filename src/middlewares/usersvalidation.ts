@@ -51,11 +51,6 @@ export const emailValidationCustom = body('email')
 export const emailValidation2 = body('email')
                                              .isString()
                                              .withMessage('Must be string')
-                                             .trim()
-                                             //.matches(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)
-                                             
-                                             
-                                                                                   
 
 
  const codeValidation = body('code')
