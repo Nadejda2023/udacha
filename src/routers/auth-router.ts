@@ -51,7 +51,7 @@ async ( req: Request, res: Response) => {
 })
 
 authRouter.post('/password-recovery',
-authMiddleware,
+//authMiddleware,
   emailConfiResValidation,
   customRateLimit,
   
