@@ -51,6 +51,7 @@ export const emailValidationCustom = body('email')
 export const emailValidation2 = body('email')
                                              .isString()
                                              .withMessage('Must be string')
+                                             .isEmail()
 
 
  const codeValidation = body('code')
