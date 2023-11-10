@@ -51,13 +51,14 @@ async ( req: Request, res: Response) => {
 })
 
 authRouter.post('/password-recovery',
-  authMiddleware,
+  //authMiddleware,
   emailConfiResValidation,
   customRateLimit,
   async (req: Request, res: Response) => {
     try {
       const email = req.body.email;
       const user = await usersQueryRepository.findUserByEmail(email);
+      console.log(user)
       if (user) {
         const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
         await UserModel.updateOne({ id: user.id }, { $set: { recoveryCode: recoveryCode } });
@@ -68,7 +69,7 @@ authRouter.post('/password-recovery',
       }
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: { code: '500', message: 'A server error has occurred' } });
+      res.status(400).json({ error: { code: '', message: '' } });
     }
   });
 
