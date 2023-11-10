@@ -51,20 +51,26 @@ async ( req: Request, res: Response) => {
 })
 
 authRouter.post('/password-recovery',
-emailConfiResValidation,
-customRateLimit,
-async (req: Request, res: Response) => {
-  const email = req.body.email;
-  const user = await usersQueryRepository.findUserByEmail(email);
-  if (user) {
-    const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
-    await UserModel.updateOne({ id: user.id }, { $set: { recoveryCode: recoveryCode } });
-    await emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode);
-    res.status(204).json({ message: 'recoveryCode sent to your mail' });
-  } else {
-    res.status(204).json({ message: 'Ok' });
-  }
-});
+  authMiddleware,
+  emailConfiResValidation,
+  customRateLimit,
+  async (req: Request, res: Response) => {
+    try {
+      const email = req.body.email;
+      const user = await usersQueryRepository.findUserByEmail(email);
+      if (user) {
+        const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
+        await UserModel.updateOne({ id: user.id }, { $set: { recoveryCode: recoveryCode } });
+        await emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode);
+        res.status(204).json({ message: 'recoveryCode sent to your mail' });
+      } else {
+        res.status(204).json({ message: 'Ok' });
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: { code: '500', message: 'A server error has occurred' } });
+    }
+  });
 
 
 
@@ -91,16 +97,22 @@ async (req: Request, res: Response) => {
   const { newPassword, recoveryCode } = req.body;
   const user = await UserModel.findOne({ recoveryCode });
   if(user){
-    
+
   }
   const result = await usersService.resetPasswordWithRecoveryCode(user?.id, newPassword, recoveryCode);
   if (result.success) {
     res.status(204).json({ message: 'Password reset successfully' });
   } else {
-    res.status(400).json({ message: 'end' });
-  }
-
-    })
+    return res.status(400).send({
+      errorsMessages: [
+          {
+              message: "recoveryCode",
+              field: "recoveryCode"
+          }
+      ]
+  })   
+}
+  } )
  
  authRouter.post('/refresh-token',
  async (req: Request, res: Response) => {
