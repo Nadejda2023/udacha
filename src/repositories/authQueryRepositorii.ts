@@ -1,5 +1,5 @@
 import { WithId } from "mongodb"
-import { AuthModel } from "../db/db"
+import { AuthModel, UserModel } from "../db/db"
 import { AuthViewModel } from "../models/authModels"
 
 
@@ -18,6 +18,7 @@ export const authQueryRepository = {
     
         
     },
+
     
     
 

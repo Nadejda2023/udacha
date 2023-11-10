@@ -45,6 +45,13 @@ async findByLoginOrEmail(loginOrEmail: string) {
     const user = await UserModel.findOne({ $or: [{ email: loginOrEmail}, { login: loginOrEmail}]})
     return user
 }, 
+
+async findUserByEmail(email:string) {
+    const user = await UserModel.findOne({email: email})
+    return user
+
+},
+
 async findTokenInBL(userId: string, token: string):Promise<boolean>{
     const userByToken = await UserModel.findOne({id: userId, refreshTokenBlackList: {$in: [token]}})
     return !!userByToken;

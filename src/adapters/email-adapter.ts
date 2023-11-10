@@ -21,6 +21,26 @@ export const emailAdapter = {
        ,
 
     });
-   return info
+    return info
+},
+
+async sendEmailWithRecoveryCode(email: string, recoveryCode: string) {
+    let transport = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+    });
+    let info = await transport.sendMail({
+        from: 'Nadych <fsklever@gmail.com>',
+        to: email,
+        html: `<h1>Password Recovery Instructions</h1>
+        <p>To recover your password, use the following recovery code: ${recoveryCode}n</a>
+        </p>`
+       ,
+    });
+    return info
+    
 }
 }

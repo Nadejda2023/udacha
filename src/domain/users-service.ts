@@ -88,5 +88,36 @@ export const usersService = {
             return await usersTwoRepository.deleteUsers(id)
 
 
+        },
+
+        async hashPassword(password: string): Promise<string> {
+            return bcrypt.hash(password, 10);
+          },
+
+       
+       async resetPasswordWithRecoveryCode(userId: string, newPassword: string, recoveryCode: string): Promise<any> {
+        const user = await UserModel.findOne({ id: userId, recoveryCode });
+    
+        if (!user) {
+          return { success: false, error: 'Invalid recovery code' };
         }
+
+        const newHashedPassword = await usersService.hashPassword(newPassword);
+
+        await UserModel.updateOne({ id: userId }, { $set: { passwordHash: newHashedPassword, recoveryCode: null } });
+       
+        return { success: true };
+    },
+       
+       
+    
+    
+    
+    
+    
+    
+    
+    
+
+       
 }
