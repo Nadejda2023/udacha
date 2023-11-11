@@ -59,11 +59,13 @@ authRouter.post('/password-recovery',
     try {
       const email = req.body.email;
       const user = await usersQueryRepository.findUserByEmail(email);
-      console.log(user)
+      console.log('user by email =', user)
       if (user) {
         const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
-        await UserModel.updateOne({ id: user.id }, { $set: { recoveryCode: recoveryCode } });
-        await emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode);
+        await UserModel.updateOne({ id: user.id }, { recoveryCode: recoveryCode });
+        //console.log('recoveryCode',recoveryCode)
+        
+        await emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode); //user.email,
         res.status(204).json({ message: 'recoveryCode sent to your mail' });
       }else {
         res.status(204).json({ message: 'Ok' });
@@ -74,48 +76,41 @@ authRouter.post('/password-recovery',
     }
   });
 
+  authRouter.post('/new-password',
+  forCreateNewPasswordValidation,
+   customRateLimit,
+   async ( req: Request, res: Response) => {
+   const { newPassword, recoveryCode } = req.body;
+   //console.log('2',recoveryCode)
+   const user = await UserModel.findOne({ recoveryCode });
+   //if(user){
 
-
-
-authRouter.get('/me', 
-authMiddleware,
-async (req: Request, res: Response) => {
-    if(!req.user){
-        return res.sendStatus(401)
-    } else {
-    return res.status(200).send({
-        email: req.user.email,
-        login: req.user.login,
-        userId: req.user.id
-    }
-    )
-  }
- })
-
- authRouter.post('/new-password',
- forCreateNewPasswordValidation,
-  customRateLimit,
-  async ( req: Request, res: Response) => {
-  const { newPassword, recoveryCode } = req.body;
-  const user = await UserModel.findOne({ recoveryCode });
-  //if(user){
-
-  //}
-  const result = await usersService.resetPasswordWithRecoveryCode( newPassword, recoveryCode);
-  if (result.success) {
-    res.status(204).json({ message: 'Password reset successfully' });
-  } else {
-    return res.status(400).send({
-      errorsMessages: [
+    if (!user) {
+      return res.status(204).json({
+        errorsMessages: [
           {
-              message: "recoveryCode",
-              field: "recoveryCode"
+            message: "send recovery code",
+            field: "recoveryCode"
           }
-      ]
-  })   
-}
-  } )
- 
+        ]
+      });
+    }
+   //}
+   const result = await usersService.resetPasswordWithRecoveryCode(user?.id, newPassword, recoveryCode);
+   if (result.success) {
+     res.status(204).json({ message: 'Password reset successfully' });
+   } else {
+     return res.status(401).send({
+       errorsMessages: [
+           {
+               message: "recoveryCode",
+               field: "recoveryCode"
+           }
+       ]
+   })   
+   }
+   } )
+
  authRouter.post('/refresh-token',
  async (req: Request, res: Response) => {
    //todo update tokens and device
@@ -168,6 +163,25 @@ async (req: Request, res: Response) => {
       }
     });
 
+    authRouter.post('/registration-confirmation',
+    customRateLimit,
+    registrationComfiValidation,
+    async (req: Request, res: Response) => {
+        const result = await authService.confirmEmail(req.body.code)
+        if(result) {
+          return res.sendStatus(204)
+        } else {
+           return res.status(400).send({
+               errorsMessages: [
+                   {
+                       message: "test code",
+                       field: "code"
+                   }
+               ]
+           })   
+       }
+    })  
+
  // from 07
  authRouter.post('/registration',
  customRateLimit,
@@ -184,27 +198,6 @@ async (req: Request, res: Response) => {
                 {
                     message: "email already confirmed",
                     field: "email"
-                }
-            ]
-        })   
-    }
- })
-
- 
-
- authRouter.post('/registration-confirmation',
- customRateLimit,
- registrationComfiValidation,
- async (req: Request, res: Response) => {
-     const result = await authService.confirmEmail(req.body.code)
-     if(result) {
-       return res.sendStatus(204)
-     } else {
-        return res.status(400).send({
-            errorsMessages: [
-                {
-                    message: "test code",
-                    field: "code"
                 }
             ]
         })   
@@ -276,3 +269,18 @@ async (req: Request, res: Response) => {
             res.status(500).json({ message: 'Server error' });
           }
         });
+
+authRouter.get('/me', 
+authMiddleware,
+async (req: Request, res: Response) => {
+    if(!req.user){
+        return res.sendStatus(401)
+    } else {
+    return res.status(200).send({
+        email: req.user.email,
+        login: req.user.login,
+        userId: req.user.id
+    }
+    )
+  }
+ })

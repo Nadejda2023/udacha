@@ -25,7 +25,7 @@ import { WithId } from "mongodb"
         createdAt: string,
         passwordSalt: string,
         passwordHash: string,
-        recoveryCode?: string,
+        recoveryCode?: string | undefined,
         emailConfirmation : EmailConfirmationType,
         //refreshTokenBlackList: string[] 
 

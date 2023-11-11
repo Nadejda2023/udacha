@@ -96,8 +96,8 @@ export const usersService = {
           },
 
        
-       async resetPasswordWithRecoveryCode( newPassword: string, recoveryCode: string): Promise<any> {
-        const user = await UserModel.findOne({ recoveryCode });
+       async resetPasswordWithRecoveryCode( id:string, newPassword: string, recoveryCode: string): Promise<any> {
+        const user = await UserModel.findOne({id: id},{ recoveryCode });
     
         if (!user) {
           return { success: false, error: 'Invalid recovery code' };
@@ -105,7 +105,7 @@ export const usersService = {
 
         const newHashedPassword = await usersService.hashPassword(newPassword);
 
-        await UserModel.updateOne({ id: user.id }, { $set: { passwordHash: newHashedPassword } });
+        await UserModel.updateOne({ id: user.id }, { $set: { passwordHash: newHashedPassword, recoveryCode: null} });
        
         return { success: true };
         }
