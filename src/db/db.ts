@@ -69,6 +69,7 @@ const UserSchema = new mongoose.Schema<UsersModel>({
   createdAt: {type: String, required: true},
   passwordSalt: {type: String, required: true},
   passwordHash: {type: String, required: true},
+  recoveryCode: {type: String},
   emailConfirmation : [{
     isConfirmed: {type: Boolean, required: true},
     confirmationCode: {type: String, required: true},

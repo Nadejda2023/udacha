@@ -98,10 +98,10 @@ async (req: Request, res: Response) => {
   async ( req: Request, res: Response) => {
   const { newPassword, recoveryCode } = req.body;
   const user = await UserModel.findOne({ recoveryCode });
-  if(user){
+  //if(user){
 
-  }
-  const result = await usersService.resetPasswordWithRecoveryCode(user?.id, newPassword, recoveryCode);
+  //}
+  const result = await usersService.resetPasswordWithRecoveryCode( newPassword, recoveryCode);
   if (result.success) {
     res.status(204).json({ message: 'Password reset successfully' });
   } else {

@@ -37,9 +37,13 @@ async sendEmailWithRecoveryCode(email: string, recoveryCode: string) {
     let info = await transport.sendMail({
         from: 'Nadych <fsklever@gmail.com>',
         to: email,
-        html: `<h1>Password Recovery Instructions</h1>
-        <p>To recover your password, use the following recovery code: ${recoveryCode}n</a>
-        </p>`
+        html: ` <h1>Password recovery</h1>
+        <p>To finish password recovery please follow the link below:
+           <a href='https://somesite.com/password-recovery?recoveryCode=${recoveryCode}'>recovery password</a>
+       </p>`
+     
+       
+        
        ,
     });
     return info

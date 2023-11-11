@@ -7,6 +7,7 @@ import { log } from "console"
 import add from "date-fns/add"
 import { emailAdapter } from "../adapters/email-adapter"
 import { UserModel } from "../db/db"
+import { id } from "date-fns/locale"
 
 
 
@@ -95,18 +96,19 @@ export const usersService = {
           },
 
        
-       async resetPasswordWithRecoveryCode(userId: string, newPassword: string, recoveryCode: string): Promise<any> {
-        const user = await UserModel.findOne({ id: userId, recoveryCode });
+       async resetPasswordWithRecoveryCode( newPassword: string, recoveryCode: string): Promise<any> {
+        const user = await UserModel.findOne({ recoveryCode });
     
         if (!user) {
           return { success: false, error: 'Invalid recovery code' };
-        }
+        } else {
 
         const newHashedPassword = await usersService.hashPassword(newPassword);
 
-        await UserModel.updateOne({ id: userId }, { $set: { passwordHash: newHashedPassword, recoveryCode: null } });
+        await UserModel.updateOne({ id: user.id }, { $set: { passwordHash: newHashedPassword } });
        
         return { success: true };
+        }
     },
        
        
