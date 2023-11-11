@@ -23,6 +23,7 @@ authRouter.post('/login',
 customRateLimit,
 async ( req: Request, res: Response) => {
     const user = await usersService.checkCredentials(req.body.loginOrEmail, req.body.password)
+    console.log(user)
     if (user) {
         const deviceId = randomUUID()
         const userId = user.id
@@ -42,7 +43,7 @@ async ( req: Request, res: Response) => {
             httpOnly: true,
             secure: true
           });
-          console.log(refreshToken)
+          
         res.status(200).json({accessToken})  
     } else {
         res.sendStatus(401) 
@@ -64,12 +65,12 @@ authRouter.post('/password-recovery',
         await UserModel.updateOne({ id: user.id }, { $set: { recoveryCode: recoveryCode } });
         await emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode);
         res.status(204).json({ message: 'recoveryCode sent to your mail' });
-      } else {
+      }else {
         res.status(204).json({ message: 'Ok' });
       }
     } catch (error) {
       console.error(error);
-      res.status(400).json({ error: { code: '', message: '' } });
+      res.status(400).json({ error });
     }
   });
 
