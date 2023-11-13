@@ -23,7 +23,7 @@ async deleteUsers(id: string) {
 },
 
 async findUserByEmail(email: string) {
-    const user = await UserModel.findOne({email: email})
+    const user = await UserModel.findOne({email})
     return user
 }, 
 

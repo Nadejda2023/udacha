@@ -64,6 +64,7 @@ const PostSchema = new mongoose.Schema<PostViewDBModel>({
 }); 
 
 const UserSchema = new mongoose.Schema<UsersModel>({
+  id:{type:String, required: true },
   login: {type: String, required: true},
   email: {type: String, required: true},
   createdAt: {type: String, required: true},

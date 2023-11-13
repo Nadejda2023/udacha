@@ -24,6 +24,7 @@ export const usersService = {
             passwordHash,
             passwordSalt,
             createdAt: new Date().toISOString(),
+            recoveryCode: randomUUID(),
             emailConfirmation: {
                 confirmationCode: randomUUID(),
                 expirationDate: add(new Date(), {
@@ -37,12 +38,12 @@ export const usersService = {
             //refreshTokenBlackList:[]
          }
         await usersQueryRepository.createUser({...newUser})
-         console.log('user:', newUser)
+         
          try {
-            await emailAdapter.sendEmail
+             emailAdapter.sendEmail
             (newUser.email, 'code', newUser.emailConfirmation.confirmationCode) //сделаиь метод для отправки письма
             } catch(error){
-                console.error(error)
+                console.error('create email error:',error)
                 //await usersTwoRepository.deleteUsers(user.id) 
                             
             }
@@ -68,23 +69,39 @@ export const usersService = {
         async checkCredentials(loginOrEmail: string, password:string) {
             const user  = await usersQueryRepository.findByLoginOrEmail(loginOrEmail)
             if (!user) {
-                log('no user')
+                
                 return false
             } // пара логин и пароль не то
             const passwordHash = await this._generateHash(password,user.passwordSalt)
             if(user.passwordHash !== passwordHash) {
-                log('password !==')
+                
                 return false
             }
 
             return user
         }, 
 
+
+
         async _generateHash(password: string, salt: string){
             const hash = await bcrypt.hash(password,salt)
             //console.log('hash: ' + hash) 
             return hash
         },
+
+       // async checkCredentials2( id: string ,newPassword:string) {
+            //const user  = await UserModel.findOne({id:id})
+            //if (!user) {
+                
+               // return false
+            //} // пара логин и пароль не то
+            //const passwordHash = await this._generateHash(newPassword, user.passwordSalt )
+            //if(user.passwordHash !== passwordHash) {
+                
+            //    return false
+            //}
+            //return user
+        //}, 
         async deleteUserById(id: string): Promise<boolean> {
             return await usersTwoRepository.deleteUsers(id)
 
@@ -96,20 +113,15 @@ export const usersService = {
           },
 
        
-       async resetPasswordWithRecoveryCode( id:string, newPassword: string, recoveryCode: string): Promise<any> {
-        const user = await UserModel.findOne({id: id},{ recoveryCode });
-    
-        if (!user) {
-          return { success: false, error: 'Invalid recovery code' };
-        } else {
-
+       async resetPasswordWithRecoveryCode( id:string, newPassword: string): Promise<any> {
+      
         const newHashedPassword = await usersService.hashPassword(newPassword);
 
-        await UserModel.updateOne({ id: user.id }, { $set: { passwordHash: newHashedPassword, recoveryCode: null} });
+        await UserModel.updateOne({ id }, { $set: { passwordHash: newHashedPassword, recoveryCode: null} });
        
         return { success: true };
         }
-    },
+    }
        
        
     
@@ -122,4 +134,3 @@ export const usersService = {
     
 
        
-}

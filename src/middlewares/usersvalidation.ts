@@ -52,6 +52,13 @@ export const emailValidation2 = body('email')
                                              .isString()
                                              .withMessage('Must be string')
                                              .isEmail()
+                                             .custom(async (email) => {
+                                                const user = await usersTwoRepository.findUserByEmail(email);
+                                                if(!user){
+                                                    throw new Error("User with this mail not found")
+                                                }
+                                                return true
+                                             }) 
 
 
  const codeValidation = body('code')

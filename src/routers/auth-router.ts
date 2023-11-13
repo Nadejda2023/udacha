@@ -23,7 +23,7 @@ authRouter.post('/login',
 customRateLimit,
 async ( req: Request, res: Response) => {
     const user = await usersService.checkCredentials(req.body.loginOrEmail, req.body.password)
-    console.log(user)
+    
     if (user) {
         const deviceId = randomUUID()
         const userId = user.id
@@ -53,26 +53,34 @@ async ( req: Request, res: Response) => {
 
 authRouter.post('/password-recovery',
   emailConfiResValidation,
-  customRateLimit,
+  //customRateLimit,
   
   async (req: Request, res: Response) => {
-    try {
+    
       const email = req.body.email;
       const user = await usersQueryRepository.findUserByEmail(email);
-      console.log('user by email =', user)
-      if (user) {
+      
+      console.log('user to create recovery code:', user)
+      if (!user) {
+        // Пользователь не найден
+        return res.status(404).json({ message: 'User not found' });
+      } 
         const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
-        await UserModel.updateOne({ id: user.id }, { recoveryCode: recoveryCode });
-        //console.log('recoveryCode',recoveryCode)
-        
-        await emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode); //user.email,
-        res.status(204).json({ message: 'recoveryCode sent to your mail' });
-      }else {
-        res.status(204).json({ message: 'Ok' });
-      }
+
+        const updating = await UserModel.updateOne({ id: user.id }, { $set: {recoveryCode} });
+        console.log('isUpdate:', updating.modifiedCount)
+        const updatedUser = await UserModel.findOne({ id: user.id })
+        const userByCode = await UserModel.findOne({ recoveryCode })
+        console.log('user with recovery code:', updatedUser)
+        console.log('user by recovery code:', userByCode)
+        console.log('recoveryCode:',recoveryCode)
+        try { 
+       emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode); //user.email,
+       return res.status(204).json({ message: 'Ok' });
+      
     } catch (error) {
-      console.error(error);
-      res.status(400).json({ error });
+      console.error('create recovery code:',error);
+      res.status(500).json({ error });
     }
   });
 
@@ -81,12 +89,12 @@ authRouter.post('/password-recovery',
    customRateLimit,
    async ( req: Request, res: Response) => {
    const { newPassword, recoveryCode } = req.body;
-   //console.log('2',recoveryCode)
+   console.log('newPass:', recoveryCode)
    const user = await UserModel.findOne({ recoveryCode });
-   //if(user){
+ console.log('user by recovery code', user)
 
     if (!user) {
-      return res.status(204).json({
+      return res.status(400).json({
         errorsMessages: [
           {
             message: "send recovery code",
@@ -95,21 +103,10 @@ authRouter.post('/password-recovery',
         ]
       });
     }
-   //}
-   const result = await usersService.resetPasswordWithRecoveryCode(user?.id, newPassword, recoveryCode);
+   const result = await usersService.resetPasswordWithRecoveryCode(user.id, newPassword);
    if (result.success) {
-     res.status(204).json({ message: 'Password reset successfully' });
-   } else {
-     return res.status(401).send({
-       errorsMessages: [
-           {
-               message: "recoveryCode",
-               field: "recoveryCode"
-           }
-       ]
-   })   
-   }
-   } )
+     return res.sendStatus(204);
+   } })
 
  authRouter.post('/refresh-token',
  async (req: Request, res: Response) => {
