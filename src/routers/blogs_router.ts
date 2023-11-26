@@ -109,7 +109,7 @@ blogsRouter.get('/', blogsControllerInstance.getBlogs.bind(blogsControllerInstan
 blogsRouter.post('/',
   authorizationValidation,
   ...CreateBlogValidation,
-  blogsControllerInstance.createBlog)
+  blogsControllerInstance.createBlog.bind(blogsControllerInstance))
   
 
 blogsRouter.get('/:blogId/posts', blogsControllerInstance.getPostByBlogId.bind(blogsControllerInstance))
