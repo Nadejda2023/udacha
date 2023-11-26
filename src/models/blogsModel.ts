@@ -16,14 +16,24 @@ export type BlogsViewModel = {
     isMembership: boolean,
 }
 
-export type BlogsViewDBModel = WithId<{ // эта
+export type BlogsViewDBModel = { 
+    id: string,
     name: string,
     description: string,
     websiteUrl: string,
     createdAt: string,
     isMembership: boolean,
-    }>
+    }
 
+ export class BlogsViewDBModelType {
+    constructor(
+     public name: string,
+     public description: string,
+     public websiteUrl: string,
+     public createdAt: string,
+     public isMembership: boolean,
+     ) { }
+    }   
 export type PaginatedBlog<T> = {
     pagesCount: number,
     page: number,

@@ -17,7 +17,17 @@ export type PostViewModel = {
     blogName: string,
     createdAt: string,
   }
-
+  export class PostsViewDBModelType {
+    constructor(
+     public id: string,
+     public title: string,
+     public shortDescription: string,
+     public content: string,
+     public blogId: string,
+     public blogName: string,
+     public createdAt: string,
+     ) { }
+    }   
   export type PostViewDBModel = WithId<{ 
     id: string,
     title: string,

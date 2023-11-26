@@ -9,7 +9,6 @@ import { UsersModel } from "./models/usersModel";
 import { usersRouter } from "./routers/users_router";
 import { authRouter } from "./routers/auth-router";
 import { commentRouter } from "./routers/comment_router";
-import { emailRouter } from "./routers/email-router";
 import cookieParser from "cookie-parser";
 import { deviceRouter } from "./routers/deviceRouter";
 import { customRateLimit } from "./middlewares/middleware_rateLimit";
@@ -50,25 +49,16 @@ export const RouterPaths:{blogs:string, posts: string, testing: string, users:st
     users: UsersModel[]
   }
   
-//
 const corsMiddleware = cors();
 app.use(corsMiddleware)
 app.use(cookieParser())
 const jsonBodyMiddleware = express.json()
 app.use(jsonBodyMiddleware)
 
-
-
-
-
-
 app.use(RouterPaths.blogs, blogsRouter) 
-
 app.use(RouterPaths.posts, postsRouter)
-
 app.use(RouterPaths.testing, testingRouter)
 app.use(RouterPaths.users, usersRouter)
 app.use(RouterPaths.auth, authRouter)
 app.use(RouterPaths.comments, commentRouter)
-app.use(RouterPaths.email, emailRouter)
 app.use(RouterPaths.device, deviceRouter)

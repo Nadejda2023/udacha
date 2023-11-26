@@ -4,8 +4,8 @@ import { AuthModel, BlogModel, CommentModel, DeviceModel, PostModel, RateLimitMo
 
 export const testingRouter = Router()
 
-testingRouter.delete('/all-data',
-async (req: Request, res: Response) => {
+class testingController {
+  async deleteAllData(req: Request, res: Response) {
     await  Promise.all([
       BlogModel.deleteMany({}),
       PostModel.deleteMany({}),
@@ -15,14 +15,10 @@ async (req: Request, res: Response) => {
       RateLimitModel.deleteMany({}),
       AuthModel.deleteMany({}),
     ])
-    
-    //await authQueryRepository.deleteAllAuth()
    return res.status(204).send('All data is deleted')
-})
-/*export const testingRouter = Router()
+}
+}
 
-  testingRouter.delete('/all-data', async (req: Request, res: Response) => {
-  await Promise.all([blogsRepository.deleteAllBlogs(),
-    postsRepository.deleteAllPosts()]);
-    res.status(204).send('All data is deleted')
-})*/
+export const testingControllerInstance = new testingController
+testingRouter.delete('/all-data', testingControllerInstance.deleteAllData.bind(testingControllerInstance)
+ )

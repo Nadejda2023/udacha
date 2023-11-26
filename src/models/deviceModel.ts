@@ -9,7 +9,16 @@ export type DeviceDbModel =
     deviceId : string,
     userId: string
 }
-
+export class DeviceDbModelType {
+    constructor(
+     public _id: ObjectId,
+     public ip : string,
+     public title : string,
+     public lastActiveDate:string,
+     public deviceId : string,
+     public userId: string
+     ) { }
+    }   
 export type DeviceViewModel =
 {
     ip : string,

@@ -2,27 +2,26 @@ import { PostModel, db} from "../db/db"
 import { PostViewDBModel, PostViewModel } from "../models/postsModel"
 
  
-
- export const postsRepository = {
+ export class PostsRepository{
     async findAllPosts(): Promise<PostViewDBModel[]> { 
 
         const filter: any = {}
     
         return PostModel.find((filter), {projection:{_id:0}}).lean()
          
-        },
+        }
         async findPostById(id: string): Promise<PostViewDBModel | null> {
             return PostModel.findOne({id: id}, {projection: {_id: 0, postId: 0}})
             
         
             
-        }, 
+        }
  
     async createPost(newPost:PostViewModel): Promise<PostViewDBModel | null> {
         const result = await PostModel.insertMany([{...newPost}])
         const newPostWithId =  await PostModel.findOne({id:newPost.id}, {projection:{_id:0}} )
         return newPostWithId 
-    },
+    }
     async updatePost(
         id: string, title: string, shortDescription: string, content: string, blogId: string)
          : Promise<boolean | undefined> {
@@ -37,12 +36,12 @@ import { PostViewDBModel, PostViewModel } from "../models/postsModel"
         }
         
     
-    },
+    }
     async deletePost(id: string): Promise<boolean> {
         const result = await PostModel.deleteOne({id: id})
         return result.deletedCount === 1
    
-    },
+    }
     async deleteAllPosts(): Promise<boolean> {
         const result = await PostModel.deleteMany({})
       
@@ -50,7 +49,9 @@ import { PostViewDBModel, PostViewModel } from "../models/postsModel"
     
         
     }
+
  }
+ export const postsRepository = new PostsRepository
 
 
 

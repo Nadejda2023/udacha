@@ -18,6 +18,21 @@ import { WithId } from "mongodb"
         createdAt: string,
        
       }
+      export class UserType {
+       constructor(
+        public id: string,
+        public login: string,
+        public email: string,
+        public createdAt: string,
+        public passwordSalt: string,
+        public passwordHash: string,
+        public  emailConfirmation : EmailConfirmationType,
+        public recoveryCode?: string | undefined,
+        ) {
+
+       }
+      }
+      
       export type UsersModel = { 
         id: string,
         login: string,

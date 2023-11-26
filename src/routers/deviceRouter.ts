@@ -1,45 +1,37 @@
 import {Request, Response, Router } from "express";
-import { DeviceDbModel, DeviceViewModel } from "../models/deviceModel";
 import { deviceQueryRepository } from "../repositories/deviceQueryRepository";
-import { jwtService } from "../_application/jwt-service";
-import { authService } from "../domain/auth-service";
+import { authQueryRepository } from "../repositories/authQueryRepositorii";
 
 export const deviceRouter = Router({})
 
-deviceRouter.get ('/devices',
-async (req: Request, res: Response) => {
-    const refreshToken = req.cookies.refreshToken;//{userId, deviceId}
-    console.log('refreshToken', refreshToken)
-    //const IP = req.ip
-    //const URL = req.baseUrl || req.originalUrl;
 
-    if (!refreshToken) {
+class DeviceController {
+  async getDeviceByUserId(req: Request, res: Response){
+    const refreshToken = req.cookies.refreshToken;
+    console.log('refreshToken', refreshToken)
+    
+      if (!refreshToken) {
         return res.status(401).json({ message: 'Refresh token not found' });
       }
-  //check token and get payload
-      const isValid = await authService.validateRefreshToken(refreshToken);//{userId, deviceId}
+      const isValid = await authQueryRepository.validateRefreshToken(refreshToken);
   
       if (!isValid || !isValid.userId || !isValid.deviceId) {
         return res.status(401).json({ message: 'Invalid refresh token' });
       }
+      const user = await authQueryRepository.findUserByID(isValid.userId)
 
-        const user = await authService.findUserByID(isValid.userId)
-//if(!user) -> 401
-        if (!user) {
-        return res.status(401).json({ message: 'User not found' });
-        }
+      if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+      }
 
-//const device = findDeviceById(deviceId)
-        const device = await deviceQueryRepository.findDeviceById(isValid.deviceId);
-//if(!device) -> 401
-        if (!device) {
-        return res.status(401).json({ message: 'Device not found' });
-        }
+      const device = await deviceQueryRepository.findDeviceById(isValid.deviceId);
+      if (!device) {
+      return res.status(401).json({ message: 'Device not found' });
+      }
 
-//if (userId !== device.userId) -> 401
-        if (isValid.userId !== device.userId) {
-        return res.status(401).json({ message: 'Unauthorized access to device' });
-        }
+      if (isValid.userId !== device.userId) {
+      return res.status(401).json({ message: 'Unauthorized access to device' });
+      }
 
 
     const result = await deviceQueryRepository.getAllDeviceByUserId(isValid.userId)
@@ -49,53 +41,57 @@ async (req: Request, res: Response) => {
     } else {
          res.sendStatus(401)
          }
-})
-
-//delete all devices exept current device
-deviceRouter.delete ('/devices',
-async (req: Request, res: Response) => {
-    const refreshToken = req.cookies.refreshToken;
-    const isValid = await authService.validateRefreshToken(refreshToken);
-    if (!isValid || !isValid.userId || !isValid.deviceId) {
-        return res.status(401).json({ message: 'Unauthorized ' });
-        }
-
-    const result = await deviceQueryRepository.deleteAllExceptOne(isValid.userId,isValid.deviceId) // delete({userId, $..: deviceId})
-    if(result) {
-        res.sendStatus(204)
-    } else {
-        res.sendStatus(500)  
     }
-     
-}) 
-///1 token = 1 device
 
-deviceRouter.delete ('/devices/:deviceId',
-async (req: Request, res: Response) => {
-    const refreshToken = req.cookies.refreshToken;
-    const deviceId = req.params.deviceId;
-    const isValid = await authService.validateRefreshToken(refreshToken);
-    if (!isValid || !isValid.userId || !isValid.deviceId) {
+    async deleteAllDeviceExceptOneDevice(req: Request, res: Response) {
+      const refreshToken = req.cookies.refreshToken;
+      const isValid = await authQueryRepository.validateRefreshToken(refreshToken);
+        if (!isValid || !isValid.userId || !isValid.deviceId) {
         return res.status(401).json({ message: 'Unauthorized ' });
         }
-    
-      const user = await authService.findUserByID(isValid.userId);
-    
-      if (!user) {
-        return res.status(401).json({ message: 'User not found' });
-      }
 
-    const device = await deviceQueryRepository.findDeviceById(deviceId)//
-    if (!device) {
-        return res.sendStatus(404);
+      const result = await deviceQueryRepository.deleteAllExceptOne(isValid.userId,isValid.deviceId) // delete({userId, $..: deviceId})
+        if(result) {
+        res.sendStatus(204)
+        } else {
+        res.sendStatus(500)  
+        }
       }
-      if (device.userId !== isValid.userId ) {
-        return res.sendStatus(403);
-      }
-   await deviceQueryRepository.deleteDeviceId( deviceId)
-
-        res.sendStatus(204)  
-   
+    async deleteDeviceById(req: Request, res: Response){
+        const refreshToken = req.cookies.refreshToken;
+        const deviceId = req.params.deviceId;
+        const isValid = await authQueryRepository.validateRefreshToken(refreshToken);
+          if (!isValid || !isValid.userId || !isValid.deviceId) {
+            return res.status(401).json({ message: 'Unauthorized ' });
+            }
     
-     
-})
+        const user = await authQueryRepository.findUserByID(isValid.userId);
+          if (!user) {
+            return res.status(401).json({ message: 'User not found' });
+          }
+    
+        const device = await deviceQueryRepository.findDeviceById(deviceId)//
+            if (!device) {
+            return res.sendStatus(404);
+          }
+    
+            if (device.userId !== isValid.userId ) {
+            return res.sendStatus(403);
+          }
+    
+        await deviceQueryRepository.deleteDeviceId( deviceId)
+            res.sendStatus(204)       
+    }
+}
+
+const deviceControllerInstance = new DeviceController
+deviceRouter.get ('/devices', deviceControllerInstance.getDeviceByUserId.bind(deviceControllerInstance)
+ )
+
+
+deviceRouter.delete ('/devices', deviceControllerInstance.deleteAllDeviceExceptOneDevice.bind(deviceControllerInstance)
+ ) 
+
+
+deviceRouter.delete ('/devices/:deviceId', deviceControllerInstance.deleteDeviceById.bind(deviceControllerInstance)
+)

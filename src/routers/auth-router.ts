@@ -1,35 +1,34 @@
 import {Request, Response, Router} from 'express'
-import { usersService } from '../domain/users-service'
-import { jwtService } from '../_application/jwt-service'
+import { JwtService } from '../_application/jwt-service'
 import { authMiddleware } from '../middlewares/auth-middleware'
-import { authService } from '../domain/auth-service'
 import { UsersInputValidation, emailConfiResValidation, registrationComfiValidation } from '../middlewares/usersvalidation'
 import { usersQueryRepository } from '../repositories/usersQuery_Repository'
 import { randomUUID } from 'crypto'
 import { customRateLimit } from '../middlewares/middleware_rateLimit'
-import { DeviceDbModel, DeviceViewModel } from '../models/deviceModel'
+import { DeviceDbModel} from '../models/deviceModel'
 import { ObjectId } from 'mongodb'
 import { deviceQueryRepository } from '../repositories/deviceQueryRepository'
 import { DeviceModel, UserModel } from '../db/db'
 import { emailAdapter } from '../adapters/email-adapter'
-import addMinutes from 'date-fns/addMinutes'
 import { forCreateNewPasswordValidation } from '../middlewares/authres'
-import { id } from 'date-fns/locale'
+import { authQueryRepository } from '../repositories/authQueryRepositorii'
 
 
-export const authRouter = Router({})
 
-authRouter.post('/login',
-customRateLimit,
-async ( req: Request, res: Response) => {
-    const user = await usersService.checkCredentials(req.body.loginOrEmail, req.body.password)
-    
+class AuthController{
+  private jwtService: JwtService
+  constructor() {
+    this.jwtService = new JwtService
+  }
+  
+  async createAuthUser( req: Request, res: Response){
+    const user = await authQueryRepository.checkCredentials(req.body.loginOrEmail, req.body.password) 
     if (user) {
         const deviceId = randomUUID()
         const userId = user.id
-        const accessToken = await jwtService.createJWT(user)
-        const refreshToken = await jwtService.createJWTRT(userId, deviceId)
-        const lastActiveDate = await jwtService.getLastActiveDate(refreshToken)
+        const accessToken = await this.jwtService.createJWT(user)
+        const refreshToken = await this.jwtService.createJWTRT(userId, deviceId)
+        const lastActiveDate = await this.jwtService.getLastActiveDate(refreshToken)
         const newDevice: DeviceDbModel =  {
             _id: new ObjectId(),
             ip: req.ip,
@@ -49,122 +48,92 @@ async ( req: Request, res: Response) => {
         res.sendStatus(401) 
     }
 
-})
-
-authRouter.post('/password-recovery',
-  emailConfiResValidation,
-  //customRateLimit,
-  
-  async (req: Request, res: Response) => {
-    
-      const email = req.body.email;
+}
+  async createPasswordRecovery( req: Request, res: Response){
+    const email = req.body.email;
       const user = await usersQueryRepository.findUserByEmail(email);
       
       console.log('user to create recovery code:', user)
-      if (!user) {
-        // Пользователь не найден
-        return res.status(404).json({ message: 'User not found' });
+      if (!user) {        
+        return res.sendStatus(204);
       } 
         const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-        const updating = await UserModel.updateOne({ id: user.id }, { $set: {recoveryCode} });
-        console.log('isUpdate:', updating.modifiedCount)
-        const updatedUser = await UserModel.findOne({ id: user.id })
-        const userByCode = await UserModel.findOne({ recoveryCode })
-        console.log('user with recovery code:', updatedUser)
-        console.log('user by recovery code:', userByCode)
-        console.log('recoveryCode:',recoveryCode)
-        try { 
-       emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode); //user.email,
+console.log('recoveryCode',recoveryCode)
+       await UserModel.updateOne({ id: user.id }, { $set: {recoveryCode} });
+         try { 
+       emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode); 
        return res.status(204).json({ message: 'Ok' });
       
     } catch (error) {
       console.error('create recovery code:',error);
       res.status(500).json({ error });
     }
-  });
+  }
+  async createNewPassword( req: Request, res: Response) {
+    const { newPassword, recoveryCode } = req.body;
+    console.log('newPass:', recoveryCode)
+    const user = await UserModel.findOne({ recoveryCode });
+  console.log('user by recovery code', user)
+ 
+     if (!user) {
+       return res.status(400).json({
+         errorsMessages: [
+           {
+             message: "send recovery code",
+             field: "recoveryCode"
+           }
+         ]
+       });
+     }
+    const result = await authQueryRepository.resetPasswordWithRecoveryCode(user.id, newPassword);
+    if (result.success) {
+      return res.sendStatus(204);
+    } }
 
-  authRouter.post('/new-password',
-  forCreateNewPasswordValidation,
-   customRateLimit,
-   async ( req: Request, res: Response) => {
-   const { newPassword, recoveryCode } = req.body;
-   console.log('newPass:', recoveryCode)
-   const user = await UserModel.findOne({ recoveryCode });
- console.log('user by recovery code', user)
-
-    if (!user) {
-      return res.status(400).json({
-        errorsMessages: [
-          {
-            message: "send recovery code",
-            field: "recoveryCode"
-          }
-        ]
-      });
-    }
-   const result = await usersService.resetPasswordWithRecoveryCode(user.id, newPassword);
-   if (result.success) {
-     return res.sendStatus(204);
-   } })
-
- authRouter.post('/refresh-token',
- async (req: Request, res: Response) => {
-   //todo update tokens and device
-    try {
-        const refreshToken = req.cookies.refreshToken;
-    
-        if (!refreshToken) {
-          return res.status(401).json({ message: 'no rt in cookie' });
-        }
-    //check token and get payload
-        const isValid = await authService.validateRefreshToken(refreshToken);
-    
-        if (!isValid) {
-          return res.status(401).json({ message: 'rt secretinvalid or rt expired' });
-        }
-        //check user
-        const user = await usersQueryRepository.findUserById(isValid.userId);
-        if (!user) {
-           return res.status(401).json({ message: 'no user' });
+    async createRefreshToken( req: Request, res: Response) {
+      try {
+          const refreshToken = req.cookies.refreshToken;
+          if (!refreshToken) {
+            return res.status(401).json({ message: 'no rt in cookie' });
           }
 
-        const device = await DeviceModel.findOne({deviceId: isValid.deviceId})
-
-        if(!device){
-            return res.status(401).json({ message: 'no device' });
+          const isValid = await authQueryRepository.validateRefreshToken(refreshToken);
+          if (!isValid) {
+            return res.status(401).json({ message: 'rt secretinvalid or rt expired' });
+          }
+          
+          const user = await usersQueryRepository.findUserById(isValid.userId);
+          if (!user) {
+             return res.status(401).json({ message: 'no user' });
             }
-
-          const lastActiveDate = await jwtService.getLastActiveDate(refreshToken)
+  
+          const device = await DeviceModel.findOne({deviceId: isValid.deviceId})
+          if(!device){
+              return res.status(401).json({ message: 'no device' });
+              }
+  
+          const lastActiveDate = await this.jwtService.getLastActiveDate(refreshToken)
           if (lastActiveDate !== device.lastActiveDate) {
-            return res.status(401).json({ message: 'Invalid refresh token version' });
-
-          }
-        
-        const newTokens = await authService.refreshTokens(user.id, device.deviceId); 
-        const newLastActiveDate = await jwtService.getLastActiveDate(newTokens.newRefreshToken)
-        await DeviceModel.updateOne({ deviceId: device.deviceId },{ $set: {lastActiveDate: newLastActiveDate}})
-         
-
-
-    
-        res.cookie('refreshToken', newTokens.newRefreshToken, {
-          httpOnly: true,
-          secure: true, 
+              return res.status(401).json({ message: 'Invalid refresh token version' });
+  
+            }
+          
+          const newTokens = await authQueryRepository.refreshTokens(user.id, device.deviceId); 
+          const newLastActiveDate = await this.jwtService.getLastActiveDate(newTokens.newRefreshToken)
+          await DeviceModel.updateOne({ deviceId: device.deviceId },{ $set: {lastActiveDate: newLastActiveDate}})
            
-        });
-        res.status(200).json({ accessToken: newTokens.accessToken });
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: '' });
+          res.cookie('refreshToken', newTokens.newRefreshToken, {
+            httpOnly: true,
+            secure: true,   
+          });
+          res.status(200).json({ accessToken: newTokens.accessToken });
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: '' });
+        }
       }
-    });
-
-    authRouter.post('/registration-confirmation',
-    customRateLimit,
-    registrationComfiValidation,
-    async (req: Request, res: Response) => {
-        const result = await authService.confirmEmail(req.body.code)
+      async createRegistrationConfirmation( req: Request, res: Response) {
+        const result = await authQueryRepository.confirmEmail(req.body.code)
         if(result) {
           return res.sendStatus(204)
         } else {
@@ -177,36 +146,24 @@ authRouter.post('/password-recovery',
                ]
            })   
        }
-    })  
-
- // from 07
- authRouter.post('/registration',
- customRateLimit,
- UsersInputValidation, 
- async (req: Request, res: Response) => {
-    
-    const user = await usersService.createUser(req.body.login, req.body.email, req.body.password)
-    //console.log('router:', user)
-    if(user) {
-    return res.sendStatus(204)
-    } else {
-        return res.status(400).send({
-            errorsMessages: [
-                {
-                    message: "email already confirmed",
-                    field: "email"
-                }
-            ]
-        })   
-    }
- })
-
-
- authRouter.post('/registration-email-resending',
- customRateLimit,
- emailConfiResValidation,
- async (req: Request, res: Response) => {
-    const result = await authService.ressendingEmail(req.body.email)
+      }
+      async createRegistration( req: Request, res: Response) {
+        const user = await authQueryRepository.createUser(req.body.login, req.body.email, req.body.password)
+        if(user) {
+        return res.sendStatus(204)
+        } else {
+            return res.status(400).send({
+                errorsMessages: [
+                    {
+                        message: "email already confirmed",
+                        field: "email"
+                    }
+                ]
+            })   
+        }
+      }
+      async createRegistrationEmailResending( req: Request, res: Response) {
+        const result = await authQueryRepository.ressendingEmail(req.body.email)
     if(result) {
         return res.status(204).send(`	
         Input data is accepted. Email with confirmation code will be send to passed email address. Confirmation code should be inside link as query param, for example: https://some-front.com/confirm-registration?code=youtcodehere`)
@@ -220,64 +177,104 @@ authRouter.post('/password-recovery',
                 ]
             })   
         }
-    
-    }) 
-
-  
-
-    authRouter.post('/logout',
-    async (req: Request, res: Response) => {
+      }
+      async createUserLogout( req: Request, res: Response) {
         try {
-            const refreshToken = req.cookies.refreshToken;
-        
-            if (!refreshToken) {
-              return res.status(401).json({ message: 'Refresh token not found' });
-            }
-        //check token and get payload
-            const isValid = await authService.validateRefreshToken(refreshToken);
-        
-            if (!isValid) {
-              return res.status(401).json({ message: 'Invalid refresh token' });
-            }
-            //check user
-        const user = await usersQueryRepository.findUserById(isValid.userId);
-        if(!user) return res.sendStatus(401);
-
-        const device = await DeviceModel.findOne({deviceId: isValid.deviceId})
-        if(!device){
+          const refreshToken = req.cookies.refreshToken;
+          if (!refreshToken) {
+            return res.status(401).json({ message: 'Refresh token not found' });
+          }
+          const isValid = await authQueryRepository.validateRefreshToken(refreshToken);
+          if (!isValid) {
             return res.status(401).json({ message: 'Invalid refresh token' });
-            }
+          }
+        
+          const user = await usersQueryRepository.findUserById(isValid.userId);
+          if(!user) return res.sendStatus(401);
 
-          const lastActiveDate = await jwtService.getLastActiveDate(refreshToken)
+          const device = await DeviceModel.findOne({deviceId: isValid.deviceId})
+          if(!device){
+          return res.status(401).json({ message: 'Invalid refresh token' });
+          }
+
+          const lastActiveDate = await this.jwtService.getLastActiveDate(refreshToken)
           if (lastActiveDate !== device.lastActiveDate) {
             return res.status(401).json({ message: 'Invalid refresh token' });
-
           }
-          
+        
           await deviceQueryRepository.deleteDeviceId(isValid.deviceId)
 
-        
-            // Удаляем refreshToken из куки клиента
-            res.clearCookie('refreshToken', { httpOnly: true, secure: true });
-        
-            res.sendStatus(204);
-          } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: 'Server error' });
-          }
-        });
-
-authRouter.get('/me', 
-authMiddleware,
-async (req: Request, res: Response) => {
-    if(!req.user){
-        return res.sendStatus(401)
-    } else {
-    return res.status(200).send({
-        email: req.user.email,
-        login: req.user.login,
-        userId: req.user.id
+          res.clearCookie('refreshToken', { httpOnly: true, secure: true });
+          res.sendStatus(204);
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: 'Server error' });
+        }
+      }
+      async createUserMe( req: Request, res: Response) {
+           if(!req.user){
+              return res.sendStatus(401)
+            } else {
+          return res.status(200).send({
+            email: req.user.email,
+            login: req.user.login,
+            userId: req.user.id
+        }
+        )
+      }
     }
-    )
-  }
- })
+}
+export const authRouter = Router({})
+
+const authControllerInstance = new AuthController()
+
+  authRouter.post('/login',
+  customRateLimit,
+  authControllerInstance.createAuthUser.bind(authControllerInstance)
+  )
+
+  authRouter.post('/password-recovery',
+  emailConfiResValidation,
+  customRateLimit,
+  authControllerInstance.createPasswordRecovery.bind(authControllerInstance)    
+  )
+
+  authRouter.post('/new-password',
+  forCreateNewPasswordValidation,
+  customRateLimit,
+  authControllerInstance.createNewPassword.bind(authControllerInstance)
+  )
+
+  authRouter.post('/refresh-token',
+  authControllerInstance.createRefreshToken.bind(authControllerInstance)
+  )
+
+  authRouter.post('/registration-confirmation',
+  customRateLimit,
+  registrationComfiValidation,
+  authControllerInstance.createRegistrationConfirmation.bind(authControllerInstance)
+  )  
+
+  authRouter.post('/registration',
+  customRateLimit,
+  UsersInputValidation, 
+  authControllerInstance.createRegistration.bind(authControllerInstance)
+  )
+
+
+  authRouter.post('/registration-email-resending',
+  customRateLimit,
+  emailConfiResValidation,
+  authControllerInstance.createRegistrationEmailResending.bind(authControllerInstance)
+  ) 
+
+  authRouter.post('/logout',
+  authControllerInstance.createUserLogout.bind(authControllerInstance)
+        
+  )
+
+  authRouter.get('/me', 
+  authMiddleware,
+  authControllerInstance.createUserMe.bind(authControllerInstance)
+
+  )

@@ -1,6 +1,7 @@
 import { body } from "express-validator";
 import { inputValidationErrors } from "./inputvalidationmiddleware";
 import { usersTwoRepository } from "../repositories/usersRepository";
+import { usersQueryRepository } from "../repositories/usersQuery_Repository";
 
 
 const loginValidation = body('login')
@@ -51,14 +52,15 @@ export const emailValidationCustom = body('email')
 export const emailValidation2 = body('email')
                                              .isString()
                                              .withMessage('Must be string')
+                                             .trim()
                                              .isEmail()
-                                             .custom(async (email) => {
-                                                const user = await usersTwoRepository.findUserByEmail(email);
-                                                if(!user){
-                                                    throw new Error("User with this mail not found")
-                                                }
-                                                return true
-                                             }) 
+                                            //  .custom(async (email) => {
+                                            //     const user = await usersQueryRepository.findUserByEmail(email);
+                                            //     if(!user){
+                                            //         throw new Error("User with this mail not found")
+                                            //     }
+                                            //     return true
+                                            //  }) 
 
 
  const codeValidation = body('code')

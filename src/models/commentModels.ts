@@ -1,10 +1,6 @@
-import { WithId } from "mongodb"
+import { Int32 } from "mongodb"
 
-
-export type commentViewModel =
-{
-  
-  
+  export type commentViewModel = {
   id: string,
   content: string,
   postId: string,
@@ -15,8 +11,7 @@ export type commentViewModel =
   createdAt: string
   }
 
-  export type commentDBViewModel =
-  { 
+  export type commentDBViewModel = { 
   id: string,
   content: string,
   postId: string,
@@ -24,10 +19,27 @@ export type commentViewModel =
     userId: string
   userLogin: string
   }
-  createdAt: string
+  createdAt: string,
+  likesInfo: {
+    likesCount: number, 
+    dislikesCount:  number,
+    myStatus: string,
   }
+}
 
-
+  export class commentDBViewModelType {
+    constructor(
+     public id: string,
+     public content: string,
+     public postId: string,
+     public commentatorInfo: {
+      userId: string
+    userLogin: string
+    },
+    public createdAt: string
+    
+     ) { }
+    }   
 
   export type PaginatedCommentViewModel<T> = {
     pagesCount: number,

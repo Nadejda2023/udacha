@@ -9,15 +9,11 @@ import { commentDBViewModel } from '../models/commentModels';
 import { AuthViewModel } from '../models/authModels';
 import { DeviceDbModel } from '../models/deviceModel';
 import { RateLimitDBModel } from '../models/rateLimitModels';
-import { MongoClient } from 'mongodb';
-
-
-
+import { Int32, MongoClient } from 'mongodb';
 
 
 
 const url = process.env.MONGO_URL || "mongodb://0.0.0.0:27017";
-//let dbName = "mongoose-example"
 console.log('url:', url)
 if(!url) {
   throw new Error('! Url doesn\'t found')
@@ -47,6 +43,7 @@ export type postsType =
 export const client = new MongoClient(url);
 ///let db = client.db("mongoose-example")
 const BlogSchema = new mongoose.Schema<BlogsViewDBModel>({ // схема это просто тип
+  id:{type:String, required: true },
   name:  {type: String, required: true}, 
   description: {type: String, required: true}, 
   websiteUrl: {type: String, required: true}, 
@@ -55,6 +52,7 @@ const BlogSchema = new mongoose.Schema<BlogsViewDBModel>({ // схема это 
 });
 
 const PostSchema = new mongoose.Schema<PostViewDBModel>({
+  //id:{type:String, required: true },
   title: {type: String, required: true},
   shortDescription: {type: String, required: true},
   content: {type: String, required: true},
@@ -80,12 +78,18 @@ const UserSchema = new mongoose.Schema<UsersModel>({
 });
 
 const CommentSchema = new mongoose.Schema<commentDBViewModel>({
+  id:{type:String, required: true },
   content: {type: String, required: true},
   commentatorInfo: [{
     userId: {type: String, required: true},
   userLogin: {type: String, required: true}
   }],
   createdAt: {type: String, required: true},
+  likesInfo: [{
+    likesCount: {type: Number, required: true},
+    dislikesCount: {type: Number, required: true},
+    myStatus: {type: String, required: true},
+  }]
 
 });
 
@@ -111,6 +115,9 @@ const RateLimitSchema = new mongoose.Schema<RateLimitDBModel>({
     date : {type: Date, required: true},
 });
 
+
+
+
 export const BlogModel = mongoose.model('blogs', BlogSchema); // подобие коллекции
 export const PostModel = mongoose.model('posts', PostSchema);
 export const UserModel = mongoose.model('users', UserSchema);
@@ -118,24 +125,18 @@ export const CommentModel = mongoose.model('comments', CommentSchema);
 export const AuthModel = mongoose.model('auth', AuthSchema);
 export const DeviceModel = mongoose.model('security', DeviceSchema);
 export const RateLimitModel = mongoose.model('rateLimit', RateLimitSchema);
-//export const blogsCollection = client.db("project").collection<BlogsViewModel>("blogs")
-//export const postsCollection = client.db("project").collection<PostViewModel>("posts")
-//export const usersCollection = client.db("project").collection<UsersModel>("users")
-//export const commentCollection = client.db("project").collection<commentDBViewModel>("comments")
-//export const authCollection = client.db("project").collection<AuthViewModel>("auth")
-//export const deviceCollection = client.db("project").collection<DeviceDbModel>("security")
-//export const rateLimitCollection = client.db("project").collection<rateLimitDBModel>("rateLimit")
+
 
 export async function runDB() {
   try{
     await client.connect();
     await mongoose.connect(url);
-    //await client.db().command({ ping:1 });
+    
     console.log("Connected successfully to mongo server");
 
   } catch {
     console.log("Can't connected to db");
-    //await client.close();
+    
     await mongoose.disconnect();
   }
 }
