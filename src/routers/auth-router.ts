@@ -11,7 +11,7 @@ import { deviceQueryRepository } from '../repositories/deviceQueryRepository'
 import { DeviceModel, UserModel } from '../db/db'
 import { emailAdapter } from '../adapters/email-adapter'
 import { forCreateNewPasswordValidation } from '../middlewares/authres'
-import { authQueryRepository } from '../repositories/authQueryRepositorii'
+import { authRepository } from '../repositories/authRepositori'
 
 
 
@@ -22,7 +22,7 @@ class AuthController{
   }
   
   async createAuthUser( req: Request, res: Response){
-    const user = await authQueryRepository.checkCredentials(req.body.loginOrEmail, req.body.password) 
+    const user = await authRepository.checkCredentials(req.body.loginOrEmail, req.body.password) 
     if (user) {
         const deviceId = randomUUID()
         const userId = user.id
@@ -53,12 +53,11 @@ class AuthController{
     const email = req.body.email;
       const user = await usersQueryRepository.findUserByEmail(email);
       
-      console.log('user to create recovery code:', user)
       if (!user) {        
         return res.sendStatus(204);
       } 
         const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
-console.log('recoveryCode',recoveryCode)
+
        await UserModel.updateOne({ id: user.id }, { $set: {recoveryCode} });
          try { 
        emailAdapter.sendEmailWithRecoveryCode(user.email, recoveryCode); 
@@ -71,9 +70,8 @@ console.log('recoveryCode',recoveryCode)
   }
   async createNewPassword( req: Request, res: Response) {
     const { newPassword, recoveryCode } = req.body;
-    console.log('newPass:', recoveryCode)
     const user = await UserModel.findOne({ recoveryCode });
-  console.log('user by recovery code', user)
+  
  
      if (!user) {
        return res.status(400).json({
@@ -85,7 +83,7 @@ console.log('recoveryCode',recoveryCode)
          ]
        });
      }
-    const result = await authQueryRepository.resetPasswordWithRecoveryCode(user.id, newPassword);
+    const result = await authRepository.resetPasswordWithRecoveryCode(user.id, newPassword);
     if (result.success) {
       return res.sendStatus(204);
     } }
@@ -97,7 +95,7 @@ console.log('recoveryCode',recoveryCode)
             return res.status(401).json({ message: 'no rt in cookie' });
           }
 
-          const isValid = await authQueryRepository.validateRefreshToken(refreshToken);
+          const isValid = await authRepository.validateRefreshToken(refreshToken);
           if (!isValid) {
             return res.status(401).json({ message: 'rt secretinvalid or rt expired' });
           }
@@ -118,7 +116,7 @@ console.log('recoveryCode',recoveryCode)
   
             }
           
-          const newTokens = await authQueryRepository.refreshTokens(user.id, device.deviceId); 
+          const newTokens = await authRepository.refreshTokens(user.id, device.deviceId); 
           const newLastActiveDate = await this.jwtService.getLastActiveDate(newTokens.newRefreshToken)
           await DeviceModel.updateOne({ deviceId: device.deviceId },{ $set: {lastActiveDate: newLastActiveDate}})
            
@@ -133,7 +131,7 @@ console.log('recoveryCode',recoveryCode)
         }
       }
       async createRegistrationConfirmation( req: Request, res: Response) {
-        const result = await authQueryRepository.confirmEmail(req.body.code)
+        const result = await authRepository.confirmEmail(req.body.code)
         if(result) {
           return res.sendStatus(204)
         } else {
@@ -148,7 +146,7 @@ console.log('recoveryCode',recoveryCode)
        }
       }
       async createRegistration( req: Request, res: Response) {
-        const user = await authQueryRepository.createUser(req.body.login, req.body.email, req.body.password)
+        const user = await authRepository.createUser(req.body.login, req.body.email, req.body.password)
         if(user) {
         return res.sendStatus(204)
         } else {
@@ -163,7 +161,7 @@ console.log('recoveryCode',recoveryCode)
         }
       }
       async createRegistrationEmailResending( req: Request, res: Response) {
-        const result = await authQueryRepository.ressendingEmail(req.body.email)
+        const result = await authRepository.ressendingEmail(req.body.email)
     if(result) {
         return res.status(204).send(`	
         Input data is accepted. Email with confirmation code will be send to passed email address. Confirmation code should be inside link as query param, for example: https://some-front.com/confirm-registration?code=youtcodehere`)
@@ -184,7 +182,7 @@ console.log('recoveryCode',recoveryCode)
           if (!refreshToken) {
             return res.status(401).json({ message: 'Refresh token not found' });
           }
-          const isValid = await authQueryRepository.validateRefreshToken(refreshToken);
+          const isValid = await authRepository.validateRefreshToken(refreshToken);
           if (!isValid) {
             return res.status(401).json({ message: 'Invalid refresh token' });
           }

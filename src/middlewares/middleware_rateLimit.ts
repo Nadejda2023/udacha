@@ -12,22 +12,22 @@ const connections: RateLimitDBModel[] = []
   const date = new Date();
 
   try {
-     // Используйте MongoDB для подсчета документов, удовлетворяющих фильтру
+    
      const count = await RateLimitModel.countDocuments({
         IP: IP,
         URL: URL,
         date: { $gte: (new Date(Date.now() - interval)) },
      });
-     console.log(count)
+    
 
      if (count  >= maxRequests) {
-        return res.sendStatus(429); // Отправка статуса "Слишком много запросов" (429), если лимит превышен
+        return res.sendStatus(429); 
      }
       await RateLimitModel.insertMany([{ IP: IP, URL: URL, date: date }]);
-     next(); // Перейти к следующему middleware или маршруту
+     next(); 
   } catch (err) {
      console.error(err);
-     res.sendStatus(500); // Отправка статуса "Внутренняя ошибка сервера" (500) при ошибке
+     res.sendStatus(500); 
   }
 }
 

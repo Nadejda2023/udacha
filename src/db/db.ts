@@ -5,16 +5,15 @@ import mongoose from 'mongoose';
 import { PostViewDBModel, PostViewModel } from '../models/postsModel';
 import {  BlogsViewDBModel } from '../models/blogsModel';
 import { UsersModel } from '../models/usersModel';
-import { commentDBViewModel } from '../models/commentModels';
 import { AuthViewModel } from '../models/authModels';
 import { DeviceDbModel } from '../models/deviceModel';
 import { RateLimitDBModel } from '../models/rateLimitModels';
 import { Int32, MongoClient } from 'mongodb';
+import { CommentDB } from '../models/commentModels';
 
 
 
-const url = process.env.MONGO_URL || "mongodb://0.0.0.0:27017";
-console.log('url:', url)
+const url = process.env.MONGO_URL || "mongodb://0.0.0.0:27017"
 if(!url) {
   throw new Error('! Url doesn\'t found')
 }
@@ -52,7 +51,7 @@ const BlogSchema = new mongoose.Schema<BlogsViewDBModel>({ // схема это 
 });
 
 const PostSchema = new mongoose.Schema<PostViewDBModel>({
-  //id:{type:String, required: true },
+  id:{type:String, required: true },
   title: {type: String, required: true},
   shortDescription: {type: String, required: true},
   content: {type: String, required: true},
@@ -69,27 +68,47 @@ const UserSchema = new mongoose.Schema<UsersModel>({
   passwordSalt: {type: String, required: true},
   passwordHash: {type: String, required: true},
   recoveryCode: {type: String},
-  emailConfirmation : [{
+  emailConfirmation : {
     isConfirmed: {type: Boolean, required: true},
     confirmationCode: {type: String, required: true},
     expirationDate: {type: Date, required: true},
-  }],
+  },
   //refreshTokenBlackList: string[]  
 });
 
-const CommentSchema = new mongoose.Schema<commentDBViewModel>({
+export enum LikeStatus {
+  Like = 'Like',
+  Dislike = 'Dislike',
+  None = 'None'
+}
+
+export type LikeStatusType = {
+  myStatus: LikeStatus,
+  userId: string,
+  createdAt: string
+}
+
+const LikeStatusSchema = new mongoose.Schema<LikeStatusType>({
+  myStatus: {type: String, required: true, enum:LikeStatus },
+  userId: {type:String, required: true},
+  createdAt: {type: String, required: true}
+})
+
+const CommentSchema = new mongoose.Schema<CommentDB>({
   id:{type:String, required: true },
   content: {type: String, required: true},
-  commentatorInfo: [{
+  commentatorInfo: {
     userId: {type: String, required: true},
   userLogin: {type: String, required: true}
-  }],
+  },
   createdAt: {type: String, required: true},
-  likesInfo: [{
+  likesInfo: {
     likesCount: {type: Number, required: true},
     dislikesCount: {type: Number, required: true},
-    myStatus: {type: String, required: true},
-  }]
+    statuses: {type: [LikeStatusSchema], default: []}
+    
+    
+  }
 
 });
 

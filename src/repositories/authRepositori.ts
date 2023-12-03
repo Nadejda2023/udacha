@@ -12,7 +12,7 @@ import jwt from 'jsonwebtoken'
 import { usersQueryRepository } from "./usersQuery_Repository"
 
 
-export class AuthQueryRepository {
+export class AuthRepository {
     async findMe():Promise<WithId<AuthViewModel> | null>  {
         const result : WithId<AuthViewModel> | null = await AuthModel.findOne({}, {projection: {_id: 0}})
 
@@ -33,7 +33,7 @@ export class AuthQueryRepository {
         if (user.emailConfirmation.expirationDate < new Date()) return false;
       
             let result = await usersTwoRepository.updateConfirmation(user.id)
-            console.log(result, ' result')
+            
             return result   
     }
     async ressendingEmail(email: string): Promise<boolean | null> {
@@ -51,7 +51,7 @@ export class AuthQueryRepository {
           try{
               await emailAdapter.sendEmail(user.email, 'code', confirmationCode)
           } catch(error){
-              console.log(error);
+              
           }
           return true
          
@@ -65,11 +65,7 @@ export class AuthQueryRepository {
         return null
         }
     }
-    // async _generateHash(password: string): Promise<string>{ 
-    //     const salt = await bcrypt.genSalt(10)
-    //     const hash = await bcrypt.hash(password, salt)
-    //     return hash
-    // }
+    
     async _generateHash(password: string, salt: string){
         const hash = await bcrypt.hash(password,salt)
         return hash
@@ -84,11 +80,15 @@ export class AuthQueryRepository {
         }
     }
 
-    async validateAccessToken(accessToken: string): Promise<any>{
+    async validateAccessToken(accessToken: string | undefined): Promise<any>{
+        if(!accessToken){
+            return null
+        }
         try {
-         const payload = jwt.verify(accessToken, accessTokenSecret1);
-        return payload;
+         const payload = jwt.verify(accessToken, accessTokenSecret1)
+            return payload;
         } catch (error) {
+            console.error('Token validation error:', error);
         return null; 
         }
     }
@@ -96,8 +96,8 @@ export class AuthQueryRepository {
     async refreshTokens(userId: string, deviceId: string):
         Promise<{ accessToken: string, newRefreshToken: string }> {
         try {
-        const accessToken = jwt.sign({ userId }, accessTokenSecret1 , { expiresIn: '10s' });
-        const newRefreshToken = jwt.sign({ userId , deviceId }, refreshTokenSecret2, { expiresIn: '20s' });
+        const accessToken = jwt.sign({ userId }, accessTokenSecret1 , { expiresIn: '10m' });
+        const newRefreshToken = jwt.sign({ userId , deviceId }, refreshTokenSecret2, { expiresIn: '20m' });
         return { accessToken, newRefreshToken };
         } catch (error) {
         throw new Error('Failed to refresh tokens');
@@ -176,4 +176,4 @@ export class AuthQueryRepository {
  
 }
 
-    export const authQueryRepository = new AuthQueryRepository
+    export const authRepository = new AuthRepository

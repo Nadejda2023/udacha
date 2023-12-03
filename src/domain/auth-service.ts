@@ -1,9 +1,9 @@
-import { AuthQueryRepository } from "../repositories/authQueryRepositorii";
+import { AuthRepository } from "../repositories/authRepositori";
 
 export class AuthService {
-  authQueryRepository : AuthQueryRepository
+  authQueryRepository : AuthRepository
   constructor() {
-    this.authQueryRepository = new AuthQueryRepository()
+    this.authQueryRepository = new AuthRepository()
   }
  
 }

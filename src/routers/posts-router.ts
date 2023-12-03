@@ -5,16 +5,16 @@ import { createPostValidation} from "../middlewares/postsvalidation";
 import { updatePostValidation } from "../middlewares/postsvalidation";
 import { PaginatedPost, PostViewDBModel,  PostViewModel } from "../models/postsModel";
 import { blogsRepository } from "../repositories/blogs_db__repository";
-
 import { getPaginationFromQuery } from "../hellpers/pagination";
 import { postsRepository } from "../repositories/posts_db__repository";
-import { PaginatedCommentViewModel, commentDBViewModel, commentViewModel } from "../models/commentModels";
-import { commentQueryRepository } from "../repositories/commentQueryRepository";
+import { CommentDB, PaginatedCommentViewModel, commentViewModel, commentViewType } from "../models/commentModels";
+import { commentRepository } from "../repositories/commentRepository";
 import { authMiddleware } from "../middlewares/auth-middleware";
 import { createPostValidationC } from "../middlewares/commentInputValidation";
 import { PostService } from "../domain/posts_service";
 import { queryRepo } from "../repositories/queryRepo";
 import { postsQueryRepository } from "../repositories/postsQueryRepository";
+import { userMiddleware } from "../middlewares/userMiddleware";
 
 export const postsRouter = Router({})
 
@@ -32,20 +32,22 @@ export const postsRouter = Router({})
     
   }
   const pagination = getPaginationFromQuery(req.query)
-  const allCommentsForPostId: PaginatedCommentViewModel<commentDBViewModel> =
-  await commentQueryRepository.getAllCommentsForPost(req.params.postId, pagination) 
+  const user = req.user
+  const allCommentsForPostId: PaginatedCommentViewModel<commentViewType> =
+  await commentRepository.getAllCommentsForPost(req.params.postId, pagination, user) 
      return res.status(200).send(allCommentsForPostId)
       
  }
 
  async createCommentsPost(req: Request, res: Response) { 
     const postWithId: PostViewDBModel| null = await postsRepository.findPostById(req.params.postId);
+    
     if(!postWithId) {
       return res.sendStatus(404)
     
     }
   
-  const comment: commentDBViewModel | null = await postsQueryRepository
+  const comment: commentViewType | null = await postsQueryRepository
   .createPostComment(postWithId.id, req.body.content, {userId: req.user!.id, userLogin: req.user!.login})
   
       return res.status(201).send(comment)
@@ -119,8 +121,8 @@ export const postsRouter = Router({})
 
 const postsControllerInstance = new PostsController()
 
-postsRouter.get('/:postId/comments', postsControllerInstance.getCommentFromPost.bind(postsControllerInstance))
-
+postsRouter.get('/:postId/comments', userMiddleware, postsControllerInstance.getCommentFromPost.bind(postsControllerInstance))
+//middleware user req.user === user
 postsRouter.post('/:postId/comments',
  authMiddleware, 
  createPostValidationC,

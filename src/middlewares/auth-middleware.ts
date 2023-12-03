@@ -6,7 +6,7 @@ import { jwtService } from "../_application/jwt-service";
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
     if(!req.headers.authorization) {
-        res.send(401);
+        res.sendStatus(401);
         return;
     }
 const typeAuth = req.headers.authorization.split(' ')[0]
@@ -19,7 +19,9 @@ if(typeAuth !== 'Bearer') return res.sendStatus(401);
     if (!userId) {
         res.sendStatus(401)
         return  
+        
     }
+    
     const user = await UserModel.findOne({id: userId})
     
     if(!user) {

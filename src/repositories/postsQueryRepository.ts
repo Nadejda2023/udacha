@@ -2,7 +2,7 @@ import { WithId } from "mongodb"
 import { CommentModel, PostModel } from "../db/db"
 import { TPagination } from "../hellpers/pagination"
 import { PaginatedPost, PostViewDBModel} from "../models/postsModel"
-import { PaginatedCommentViewModel, commentDBViewModel, commentViewModel } from "../models/commentModels"
+import { CommentDB, PaginatedCommentViewModel, commentViewModel, commentViewType } from "../models/commentModels"
 import { randomUUID } from "crypto"
 
  export class PostsQueryRepository {
@@ -30,36 +30,39 @@ import { randomUUID } from "crypto"
 
    async createPostComment(postId: string, content: string, 
     commentatorInfo: {userId:string, userLogin: string}):
-   Promise <commentDBViewModel> {
+   Promise <commentViewType> {
       
       const createCommentForPost = {
             id: randomUUID(),
             content, 
             commentatorInfo,
             createdAt: new Date().toISOString(),
-            postId,
+            //postId,
             likesInfo: {
                 likesCount: 0,
                 dislikesCount: 0,
                 myStatus: 'None',
               },
     }
-       await CommentModel.insertMany([{...createCommentForPost}])
+       await CommentModel.create(createCommentForPost)
         return  {
         id: createCommentForPost.id,
         content: createCommentForPost.content,
         commentatorInfo: createCommentForPost.commentatorInfo,
         createdAt: createCommentForPost.createdAt,
-        postId: createCommentForPost.postId,
-        likesInfo: createCommentForPost.likesInfo
-
+        //postId: createCommentForPost.postId,
+        likesInfo: {
+            likesCount: createCommentForPost.likesInfo.likesCount,
+            dislikesCount: createCommentForPost.likesInfo.dislikesCount,
+            myStatus: createCommentForPost.likesInfo.myStatus,
+          },
     }
   }
 
    async getAllCommentsForPost(pagination: TPagination):
-    Promise<PaginatedCommentViewModel<commentDBViewModel>> {
+    Promise<PaginatedCommentViewModel<CommentDB>> {
        const filter = {name: { $regex :pagination.searchNameTerm, $options: 'i'}}
-       const result : WithId<WithId<commentDBViewModel>>[] = await CommentModel.find
+       const result : WithId<WithId<CommentDB>>[] = await CommentModel.find
        (filter, {projection: {_id: 0}})
    
    .sort({[pagination.sortBy]: pagination.sortDirection})

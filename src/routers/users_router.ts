@@ -5,7 +5,7 @@ import { usersQueryRepository } from "../repositories/usersQuery_Repository";
 import { authorizationValidation} from "../middlewares/inputvalidationmiddleware";
 import { PaginatedUser, UsersModel } from "../models/usersModel";
 import { UsersInputValidation } from "../middlewares/usersvalidation";
-import { authQueryRepository } from "../repositories/authQueryRepositorii";
+import { authRepository } from "../repositories/authRepositori";
 
 
 export const usersRouter = Router({})
@@ -16,7 +16,7 @@ class UsersController {
         this.usersService = new UserService
     }
     async createUser(req: Request, res: Response) {
-        const newUser = await authQueryRepository.createUser(req.body.login, req.body.email, req.body.password)
+        const newUser = await authRepository.createUser(req.body.login, req.body.email, req.body.password)
         if(!newUser) {
             res.sendStatus(401)
         } else {

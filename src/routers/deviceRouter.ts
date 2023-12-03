@@ -1,6 +1,6 @@
 import {Request, Response, Router } from "express";
 import { deviceQueryRepository } from "../repositories/deviceQueryRepository";
-import { authQueryRepository } from "../repositories/authQueryRepositorii";
+import { authRepository } from "../repositories/authRepositori";
 
 export const deviceRouter = Router({})
 
@@ -8,17 +8,16 @@ export const deviceRouter = Router({})
 class DeviceController {
   async getDeviceByUserId(req: Request, res: Response){
     const refreshToken = req.cookies.refreshToken;
-    console.log('refreshToken', refreshToken)
     
       if (!refreshToken) {
         return res.status(401).json({ message: 'Refresh token not found' });
       }
-      const isValid = await authQueryRepository.validateRefreshToken(refreshToken);
+      const isValid = await authRepository.validateRefreshToken(refreshToken);
   
       if (!isValid || !isValid.userId || !isValid.deviceId) {
         return res.status(401).json({ message: 'Invalid refresh token' });
       }
-      const user = await authQueryRepository.findUserByID(isValid.userId)
+      const user = await authRepository.findUserByID(isValid.userId)
 
       if (!user) {
       return res.status(401).json({ message: 'User not found' });
@@ -35,7 +34,7 @@ class DeviceController {
 
 
     const result = await deviceQueryRepository.getAllDeviceByUserId(isValid.userId)
-    console.log(result)
+    
     if(result) {
         res.status(200).send(result)
     } else {
@@ -45,7 +44,7 @@ class DeviceController {
 
     async deleteAllDeviceExceptOneDevice(req: Request, res: Response) {
       const refreshToken = req.cookies.refreshToken;
-      const isValid = await authQueryRepository.validateRefreshToken(refreshToken);
+      const isValid = await authRepository.validateRefreshToken(refreshToken);
         if (!isValid || !isValid.userId || !isValid.deviceId) {
         return res.status(401).json({ message: 'Unauthorized ' });
         }
@@ -60,12 +59,12 @@ class DeviceController {
     async deleteDeviceById(req: Request, res: Response){
         const refreshToken = req.cookies.refreshToken;
         const deviceId = req.params.deviceId;
-        const isValid = await authQueryRepository.validateRefreshToken(refreshToken);
+        const isValid = await authRepository.validateRefreshToken(refreshToken);
           if (!isValid || !isValid.userId || !isValid.deviceId) {
             return res.status(401).json({ message: 'Unauthorized ' });
             }
     
-        const user = await authQueryRepository.findUserByID(isValid.userId);
+        const user = await authRepository.findUserByID(isValid.userId);
           if (!user) {
             return res.status(401).json({ message: 'User not found' });
           }

@@ -27,7 +27,7 @@ export class BlogService {
                 description: description,
                 websiteUrl: website,
                 createdAt: (new Date()).toISOString(),
-                isMembership: false,
+                isMembership: true,
                 
             }
             

@@ -31,7 +31,6 @@ class BlogsController{
   async createBlog(req: Request , res: Response<BlogsViewDBModel | null >) {
     const { name, description, websiteUrl} = req.body
   const newBlog : BlogsViewDBModel| null  = await this.blogsService.createBlog(name, description, websiteUrl)
-  console.log(newBlog);
   
   return res.status(sendStatus.CREATED_201).send(newBlog)
   

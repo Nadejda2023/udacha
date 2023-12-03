@@ -11,7 +11,7 @@ import { PostViewDBModel, PostViewModel } from "../models/postsModel"
          
         }
         async findPostById(id: string): Promise<PostViewDBModel | null> {
-            return PostModel.findOne({id: id}, {projection: {_id: 0, postId: 0}})
+            return PostModel.findOne({id: id}, {projection: {_id: 0}}) //proj : postId
             
         
             

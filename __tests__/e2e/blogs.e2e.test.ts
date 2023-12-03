@@ -8,6 +8,7 @@ describe('Mongoose integration', () => {
     beforeAll(async () => {
         /* Connecting to the database. */
         await mongoose.connect(mongoURI)
+        await request(app).delete('/testing/all-data')
     })
 
     afterAll(async () => {
@@ -15,8 +16,10 @@ describe('Mongoose integration', () => {
         await mongoose.connection.close()
     })
 
+   
+
     describe('/blogs', () => {
-        beforeAll( async () => {
+      beforeAll( async () => {
             await request(app).delete('/testing/all-data')
         })
 
@@ -26,7 +29,7 @@ describe('Mongoose integration', () => {
                 .expect(200)
             expect(res_.body.items.length).toBe(0)
         })
-    })
+     })
 })
         
 

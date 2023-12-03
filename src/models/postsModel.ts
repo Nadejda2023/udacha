@@ -28,7 +28,7 @@ export type PostViewModel = {
      public createdAt: string,
      ) { }
     }   
-  export type PostViewDBModel = WithId<{ 
+  export type PostViewDBModel = { 
     id: string,
     title: string,
     shortDescription: string,
@@ -36,7 +36,7 @@ export type PostViewModel = {
     blogId: string,
     blogName: string,
     createdAt: string,
-  }>
+  }
 
   export type PaginatedPost<T> = {
     pagesCount: number,

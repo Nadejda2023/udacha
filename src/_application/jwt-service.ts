@@ -2,23 +2,23 @@ import { UsersModel } from "../models/usersModel";
 import jwt from 'jsonwebtoken'
 import { accessTokenSecret1, refreshTokenSecret2, settings } from "../setting";
 import { UserModel } from "../db/db";
-import { AuthQueryRepository } from "../repositories/authQueryRepositorii";
+import { AuthRepository } from "../repositories/authRepositori";
 
 
 export class JwtService {
   
-  authQueryRepository: AuthQueryRepository
+  authQueryRepository: AuthRepository
   constructor(){
-      this.authQueryRepository = new AuthQueryRepository()
+      this.authQueryRepository = new AuthRepository()
   }
  
   async createJWT(user: UsersModel) {
-    const token = jwt.sign({userId: user.id}, accessTokenSecret1, {expiresIn: '10m'})
+    const token = jwt.sign({userId: user.id}, accessTokenSecret1, {expiresIn: '600000s'})
     return token
       }
 
 async createJWTRT(userId: string, deviceId: string) {
-    const rtoken = jwt.sign({ userId, deviceId}, refreshTokenSecret2, { expiresIn: '20s' });
+    const rtoken = jwt.sign({ userId, deviceId}, refreshTokenSecret2, { expiresIn: '200000s' });
     return rtoken
 }
 
@@ -43,7 +43,6 @@ async getUserIdByToken(token: string): Promise<string | null> {
         const result: any = jwt.verify(token, settings.JWT_SECRET)
         return result.userId;
     } catch (error) {
-        console.log(error)
         return null
     
     }
