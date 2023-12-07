@@ -30,21 +30,31 @@ import { UsersModel } from "../models/usersModel"
     }
    
     async findCommentById(commentId: string): Promise<CommentDB| null> {
-        return CommentModel.findOne({id: commentId}, {_id: 0, postId: 0, __v: 0, statuses: 0})
-        //return CommentModel.findOne({id: commentId}).select({_id: 0, postId: 0, __v: 0})
+        //return CommentModel.findOne({id: commentId}, {_id: 0, postId: 0, __v: 0, statuses: 0})
+        return CommentModel.findOne({id: commentId})
 
     }
 
     async updateCommentLikeStatus(existingComment: CommentDB): Promise<CommentDB | undefined | boolean> {
         try {
-            const result = await CommentModel.updateOne({ id: existingComment.id }, { $set: {  'likesInfo.likesCount': existingComment.likesInfo.likesCount,
-            'likesInfo.dislikesCount': existingComment.likesInfo.dislikesCount,
-            'likesInfo.statuses': existingComment.likesInfo.statuses } });
-            console.log('result:', result);
-            return result.modifiedCount === 1;
+            console.log('existingComment :', existingComment)
+            // const result = await CommentModel.updateOne({ id: existingComment.id }, {
+            //      $set: {  
+            // 'likesInfo.likesCount': existingComment.likesInfo.likesCount,
+            // 'likesInfo.dislikesCount': existingComment.likesInfo.dislikesCount,
+            // 'likesInfo.statuses': existingComment.likesInfo.statuses } });
+            //console.log('result:', result);
+            // if (result === undefined) {
+            //     return undefined;
+            //   }
+            // return result.modifiedCount === 1;
+            return true
+            
           } catch (error) {
             console.error('Error updating comment:', error);
-            return undefined; 
+            
+            return undefined;
+      
           }
 
     }

@@ -18,7 +18,7 @@ class CommentController {
     const user = req.user 
 
 
-    
+    //const existingComment = null
       const existingComment: CommentDB | null = await commentRepository.findCommentById(commentId);
 
       if (!existingComment) {
@@ -77,9 +77,11 @@ if(isReactionExist){
         await commentRepository.updateCommentLikeStatus(existingComment);
 
         return res.sendStatus(204);
-      
     }
+
+    
   }
+  
 
     
   
@@ -104,6 +106,7 @@ if(isReactionExist){
       return res.sendStatus(204); 
     } 
   }  
+
 
   async getCommentById(req: Request, res: Response<commentViewType| undefined >) {
     const user = req.user!

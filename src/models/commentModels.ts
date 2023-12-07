@@ -66,7 +66,7 @@ import { UsersModel } from "./usersModel"
         
       }
     }
-    getViewModel(user:any):commentViewType{
+    getViewModel(user:UsersModel | null):commentViewType{
       return { 
         id: this.id,
         content: this.content,

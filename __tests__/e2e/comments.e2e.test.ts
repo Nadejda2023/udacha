@@ -148,6 +148,13 @@ describe('Mongoose integration', () => {
                   "myStatus": "Like"
                 }
             })
+            const updateCommenеDislikeStatus = await request(app)
+            .put(`/comments/${createdCommentForSpecificPost.body.id}/like-status`)
+            .set("Authorization",`Bearer ${accessToken}`)
+            .send({
+                    "likeStatus": "Dislike" 
+            })
+            .expect(204)
                 
                 const commentByIdAfterDislike = await request(app)
             .get(`/comments/${createdCommentForSpecificPost.body.id}`)

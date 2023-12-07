@@ -89,9 +89,10 @@ export type LikeStatusType = {
 }
 
 const LikeStatusSchema = new mongoose.Schema<LikeStatusType>({
-  myStatus: {type: String, required: true, enum:LikeStatus },
+  myStatus: {type: String, required: true}, //, enum:LikeStatus 
   userId: {type:String, required: true},
   createdAt: {type: String, required: true}
+
 })
 
 const CommentSchema = new mongoose.Schema<CommentDB>({
