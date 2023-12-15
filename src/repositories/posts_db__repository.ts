@@ -1,26 +1,49 @@
 import { PostModel, db} from "../db/db"
-import { PostViewDBModel, PostViewModel } from "../models/postsModel"
+import { PostViewModel2, PostViewModel, PostsDBModels } from "../models/postsModel"
+import { UsersModel } from "../models/usersModel"
 
  
  export class PostsRepository{
-    async findAllPosts(): Promise<PostViewDBModel[]> { 
+    async findAllPosts(): Promise<PostViewModel2[]> { 
 
         const filter: any = {}
     
         return PostModel.find((filter), {projection:{_id:0}}).lean()
          
         }
-        async findPostById(id: string): Promise<PostViewDBModel | null> {
-            return PostModel.findOne({id: id}, {projection: {_id: 0}}) //proj : postId
+        async findPostById(id: string): Promise<PostsDBModels | null> {
+            return PostModel.findOne({id: id}, {projection: {_id: 0}}) //PostsDBModels.getViewModel(user, foundPost)
             
         
             
         }
  
-    async createPost(newPost:PostViewModel): Promise<PostViewDBModel | null> {
-        const result = await PostModel.insertMany([{...newPost}])
-        const newPostWithId =  await PostModel.findOne({id:newPost.id}, {projection:{_id:0}} )
-        return newPostWithId 
+    async createPost(newPost:PostViewModel2, user: UsersModel | null): Promise<PostViewModel2 | null> {
+        const result = await PostModel.create(newPost)
+        
+        return {
+            id: newPost.id,
+            title: newPost.title,
+            shortDescription: newPost.shortDescription,
+            content: newPost.content,
+            blogId: newPost.blogId,
+            blogName: newPost.blogName,
+            createdAt: newPost.createdAt,
+            extendedLikesInfo: {
+            likesCount: newPost.extendedLikesInfo.likesCount,
+            dislikesCount: newPost.extendedLikesInfo.dislikesCount,
+            myStatus: newPost.extendedLikesInfo.myStatus,
+            newestLikes: user ?[{
+                addedAt: newPost.extendedLikesInfo.newestLikes[0]?.addedAt || '',
+                userId: newPost.extendedLikesInfo.newestLikes[0]?.userId || '',
+                login: newPost.extendedLikesInfo.newestLikes[0]?.login || ''
+                }] : []
+            
+        
+
+          },
+            
+        }
     }
     async updatePost(
         id: string, title: string, shortDescription: string, content: string, blogId: string)

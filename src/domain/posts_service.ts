@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto"
-import { PostViewDBModel, PostViewModel, PostsViewDBModelType } from "../models/postsModel"
+import { PostViewModel2, PostViewModel, PostsDBModels} from "../models/postsModel"
 import { PostsRepository } from "../repositories/posts_db__repository"
 import { blogsRepository } from "../repositories/blogs_db__repository"
+import { UsersModel } from "../models/usersModel"
 
  
  export class PostService {
@@ -10,30 +11,42 @@ import { blogsRepository } from "../repositories/blogs_db__repository"
         this.postsRepository= new PostsRepository()
     }
 
-    async findAllPosts(): Promise<PostViewDBModel[]> { 
+    async findAllPosts(): Promise<PostViewModel2[]> { 
         return this.postsRepository.findAllPosts()
      }
 
-    async findPostById(id: string): Promise<PostViewModel | null> {
+    async findPostById(id: string): Promise<PostsDBModels | null> {
         return this.postsRepository.findPostById(id)      
      }
  
     async createPost(title: string, shortDescription: string,
-         content: string, blogId: string): Promise<PostViewDBModel | null> {
+         content: string, blogId: string, user : UsersModel | null): Promise<PostViewModel2 | null> {
+            
+           
         const blog = await blogsRepository.findBlogById(blogId)
         if(!blog) return null 
-        const newPost: PostsViewDBModelType = new PostsViewDBModelType(
-            randomUUID(),
+        const newPost: PostViewModel2  = {
+            id: randomUUID(),
             title,
             shortDescription,
             content,
             blogId,
-            blog.name,
-            new Date().toISOString()
-            )   // поменяла на класс PostsViewDBModelType
+            blogName: blog.name,
+            createdAt: new Date().toISOString(),
+            extendedLikesInfo:{
+                likesCount: 0,
+                dislikesCount: 0,
+                myStatus: 'None',
+                newestLikes: user ? [{
+                  addedAt: new Date().toISOString(),
+                  userId: user.id,
+                  login: user.login
+                }] : []
             
-        
-        const newPostWithId =  await this.postsRepository.createPost(newPost)
+                },
+            }
+            
+        const newPostWithId =  await this.postsRepository.createPost(newPost, user)
         return newPostWithId 
     }
 

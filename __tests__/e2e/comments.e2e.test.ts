@@ -170,8 +170,8 @@ describe('Mongoose integration', () => {
                 },
                 "createdAt":expect.any(String),
                 "likesInfo": {
-                  "likesCount": 1,
-                  "dislikesCount": 0,
+                  "likesCount": 0,
+                  "dislikesCount": 1,
                   "myStatus": "Dislike"
                 }
              })

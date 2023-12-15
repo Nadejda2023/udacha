@@ -3,11 +3,11 @@ import { sendStatus } from "./sendStatus";
 import { authorizationValidation} from "../middlewares/inputvalidationmiddleware";
 import { createPostValidation} from "../middlewares/postsvalidation";
 import { updatePostValidation } from "../middlewares/postsvalidation";
-import { PaginatedPost, PostViewDBModel,  PostViewModel } from "../models/postsModel";
+import { PaginatedPost, PostViewModel2,  PostViewModel, PostsDBModels } from "../models/postsModel";
 import { blogsRepository } from "../repositories/blogs_db__repository";
 import { getPaginationFromQuery } from "../hellpers/pagination";
 import { postsRepository } from "../repositories/posts_db__repository";
-import { CommentDB, PaginatedCommentViewModel, commentViewModel, commentViewType } from "../models/commentModels";
+import { CommentDB, PaginatedCommentViewModel, commentViewType } from "../models/commentModels";
 import { commentRepository } from "../repositories/commentRepository";
 import { authMiddleware } from "../middlewares/auth-middleware";
 import { createPostValidationC } from "../middlewares/commentInputValidation";
@@ -15,6 +15,8 @@ import { PostService } from "../domain/posts_service";
 import { queryRepo } from "../repositories/queryRepo";
 import { postsQueryRepository } from "../repositories/postsQueryRepository";
 import { userMiddleware } from "../middlewares/userMiddleware";
+import { validationCommentLikeStatus } from "../middlewares/likemiddleware";
+import { LikeStatus, LikeStatusTypePost, NewestLikeTypePost } from "../db/db";
 
 export const postsRouter = Router({})
 
@@ -22,7 +24,103 @@ export const postsRouter = Router({})
   
   private postsService: PostService
   constructor() {
-    this.postsService = new PostService
+    this.postsService = new PostService()
+  }
+
+  async updatePostWithLikeStatus(req: Request, res: Response){
+    const postId = req.params.postId;
+    const likeStat = req.body;
+    const user = req.user 
+
+    const existingPost: PostsDBModels | null = await postsRepository.findPostById(postId)
+     console.log('existingPost:', existingPost)
+      if (!existingPost) {
+        return res.sendStatus(404);
+      }
+
+      const isReactionExist = existingPost.extendedLikesInfo.statuses.find(((s: LikeStatusTypePost) => s.userId === user!.id))
+      console.log('isReactionExist:', isReactionExist)
+
+      if(isReactionExist){
+        if (likeStat.likeStatus === 'Like' && isReactionExist.myStatus === 'None'){
+          isReactionExist.myStatus = LikeStatus.Like;
+          existingPost.extendedLikesInfo.likesCount += 1;
+        } else if (likeStat.likeStatus === 'Like' && isReactionExist.myStatus === 'Dislike'){
+          isReactionExist.myStatus = LikeStatus.Like;
+          existingPost.extendedLikesInfo.likesCount += 1;
+          existingPost.extendedLikesInfo.dislikesCount -= 1;
+        } else  if (likeStat.likeStatus === 'Dislike' && isReactionExist.myStatus === 'None'){
+          isReactionExist.myStatus = LikeStatus.Dislike
+          existingPost.extendedLikesInfo.dislikesCount += 1;
+        } else if (likeStat.likeStatus === 'Dislike' && isReactionExist.myStatus === 'Like'){
+          isReactionExist.myStatus = LikeStatus.Dislike;
+          existingPost.extendedLikesInfo.likesCount -= 1;
+          existingPost.extendedLikesInfo.dislikesCount += 1;
+        } else if(likeStat.likeStatus === 'None' && isReactionExist.myStatus === 'Dislike') {
+          isReactionExist.myStatus = LikeStatus.None
+          existingPost.extendedLikesInfo.dislikesCount -= 1;
+        } else if(likeStat.likeStatus === 'None' && isReactionExist.myStatus === 'Like') {
+          isReactionExist.myStatus = LikeStatus.None
+          existingPost.extendedLikesInfo.likesCount -= 1;
+        } 
+      }else {
+        if (likeStat.likeStatus === 'Like') {
+          existingPost.extendedLikesInfo.likesCount += 1;
+          existingPost.extendedLikesInfo.statuses.push({
+                myStatus:LikeStatus.Like,
+                userId: user!.id,
+                createdAt: new Date().toISOString()
+              })
+            } else if (likeStat.likeStatus === 'Dislike'){
+              existingPost.extendedLikesInfo.dislikesCount += 1;
+              existingPost.extendedLikesInfo.statuses.push({
+                myStatus:LikeStatus.Dislike,
+                userId: user!.id,
+                createdAt: new Date().toISOString()
+              })
+      
+            } else if (likeStat.likeStatus === 'None'){
+              existingPost.extendedLikesInfo.statuses.push({
+                myStatus:LikeStatus.None,
+                userId: user!.id,
+                createdAt: new Date().toISOString()
+              })
+            }
+          }
+      
+       
+          const latestLikes = existingPost.extendedLikesInfo.statuses
+              .filter((like: LikeStatusTypePost) => like.myStatus !== LikeStatus.None)
+              .sort((a: LikeStatusTypePost, b: LikeStatusTypePost) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+              .slice(0, 3);
+
+              await postsQueryRepository.updatePostLikeStatus(existingPost, latestLikes);
+
+              
+
+            //   const response: PostViewModel2 = {
+            //     id: existingPost.id,
+            // title: existingPost.title,
+            // shortDescription: existingPost.shortDescription,
+            // content: existingPost.content,
+            // blogId: existingPost.blogId,
+            // blogName: existingPost.blogName,
+            // createdAt: existingPost.createdAt,
+            //     extendedLikesInfo: {
+            //       likesCount: existingPost.extendedLikesInfo.likesCount,
+            //       dislikesCount: existingPost.extendedLikesInfo.dislikesCount,
+            //       myStatus: existingPost.extendedLikesInfo.myStatus,
+            //       newestLikes: latestLikes.map((like: LikeStatusTypePost) => ({
+            //         addedAt: like.createdAt,
+            //         userId: like.userId,
+            //         login: user!.login, 
+            //       })),
+            //     }
+            //   }
+                
+
+
+          return res.sendStatus(204) //.send(response)
   }
 
   async getCommentFromPost(req: Request, res: Response){   
@@ -40,7 +138,7 @@ export const postsRouter = Router({})
  }
 
  async createCommentsPost(req: Request, res: Response) { 
-    const postWithId: PostViewDBModel| null = await postsRepository.findPostById(req.params.postId);
+    const postWithId: PostsDBModels| null = await postsRepository.findPostById(req.params.postId);
     
     if(!postWithId) {
       return res.sendStatus(404)
@@ -54,9 +152,10 @@ export const postsRouter = Router({})
 
   }
 
- async getPostWithPagination(req: Request, res: Response<PaginatedPost<PostViewModel>>) {
+ async getPostWithPagination(req: Request, res: Response<PaginatedPost<PostViewModel2>>) {
   const pagination = getPaginationFromQuery(req.query)
-  const foundPost: PaginatedPost<PostViewModel> = await queryRepo.findAllPosts(pagination)
+  const user = req.user
+  const foundPost: PaginatedPost<PostViewModel2> = await queryRepo.findAllPosts(pagination, user)
   if(!foundPost){
     return res.sendStatus(sendStatus.NOT_FOUND_404)
   } else {
@@ -65,11 +164,12 @@ export const postsRouter = Router({})
   
   }
 
-  async getPostById(req: Request, res: Response<PostViewModel| undefined | null>) {
-  
-    const foundPost = await this.postsService.findPostById(req.params.id)    
+  async getPostById(req: Request, res: Response<PostViewModel2| undefined | null>) {
+    const user = req.user!
+    const foundPost: PostsDBModels | null = await this.postsService.findPostById(req.params.id)    
       if (foundPost) {
-        return res.status(sendStatus.OK_200).send(foundPost)
+       
+        return res.status(sendStatus.OK_200).send(PostsDBModels.getViewModel(user, foundPost))
         
       } else {
         
@@ -77,12 +177,13 @@ export const postsRouter = Router({})
     }
     }
 
-    async createPost(req: Request, res: Response<PostViewDBModel| undefined | null>) {
+    async createPost(req: Request, res: Response<PostViewModel2 | undefined | null>) {
       const findBlogById =  await blogsRepository.findBlogById(req.body.blogId)
+      const user = req.user 
       
       if (findBlogById) {
         const { title ,shortDescription, content, blogId} = req.body
-      const newPost : PostViewDBModel | null= await this.postsService.createPost(title,shortDescription, content, blogId)
+      const newPost : PostViewModel2 | null= await this.postsService.createPost(title,shortDescription, content, blogId, user)
         if(!newPost) {
           
           return res.sendStatus(sendStatus.BAD_REQUEST_400 )
@@ -121,8 +222,12 @@ export const postsRouter = Router({})
 
 const postsControllerInstance = new PostsController()
 
+postsRouter.put('/:postId/like-status', 
+authMiddleware,
+validationCommentLikeStatus,
+//updatePostValidation,
+postsControllerInstance.updatePostWithLikeStatus.bind(postsControllerInstance))
 postsRouter.get('/:postId/comments', userMiddleware, postsControllerInstance.getCommentFromPost.bind(postsControllerInstance))
-//middleware user req.user === user
 postsRouter.post('/:postId/comments',
  authMiddleware, 
  createPostValidationC,

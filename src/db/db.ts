@@ -2,7 +2,6 @@ import { DB } from '../setting';
 import * as dotenv from 'dotenv'
 dotenv.config()
 import mongoose from 'mongoose';
-import { PostViewDBModel, PostViewModel } from '../models/postsModel';
 import {  BlogsViewDBModel } from '../models/blogsModel';
 import { UsersModel } from '../models/usersModel';
 import { AuthViewModel } from '../models/authModels';
@@ -10,6 +9,7 @@ import { DeviceDbModel } from '../models/deviceModel';
 import { RateLimitDBModel } from '../models/rateLimitModels';
 import { Int32, MongoClient } from 'mongodb';
 import { CommentDB } from '../models/commentModels';
+import { PostViewModel2, PostsDBModels } from '../models/postsModel';
 
 
 
@@ -19,25 +19,40 @@ if(!url) {
 }
 
 
-export type blogsType = {
-  id:  string,
-  name: string,
-  description: string,
-  websiteUrl: string, 
-  createdAt: string,
-  isMembership: boolean 
-}
 
-export type postsType =
-{
-  id: string,
-  title: string,
-  shortDescription: string,
-  content: string,
-  blogId: string,
-  blogName: string,
+const LikeStatusSchema = new mongoose.Schema<LikeStatusType>({
+  myStatus: {type: String, required: true}, 
+  userId: {type:String, required: true},
+  createdAt: {type: String, required: true}
+
+})
+
+const LikeStatusPostSchema = new mongoose.Schema<LikeStatusTypePost>({
+  myStatus: {type: String, required: true}, 
+  userId: {type:String, required: true},
+  createdAt: {type: String, required: true}
+})
+
+export type LikeStatusTypePost = {
+  myStatus: LikeStatus,
+  userId: string,
   createdAt: string
 }
+
+
+
+
+export type NewestLikeTypePost = {
+  addedAt: string,
+  userId: string,
+  login: string | null
+}
+
+const NewestLikesForPostsSchema = new mongoose.Schema<NewestLikeTypePost>({
+  addedAt: {type: String, required: true},
+  userId: {type:String, required: true},
+  login: {type:String, required: true}
+})
 
 export const client = new MongoClient(url);
 ///let db = client.db("mongoose-example")
@@ -50,7 +65,7 @@ const BlogSchema = new mongoose.Schema<BlogsViewDBModel>({ // схема это 
   isMembership: {type: Boolean, required: true}, 
 });
 
-const PostSchema = new mongoose.Schema<PostViewDBModel>({
+const PostSchema = new mongoose.Schema<PostsDBModels>({
   id:{type:String, required: true },
   title: {type: String, required: true},
   shortDescription: {type: String, required: true},
@@ -58,6 +73,13 @@ const PostSchema = new mongoose.Schema<PostViewDBModel>({
   blogId: {type: String, required: true},
   blogName: {type: String, required: true},
   createdAt: {type: String, required: true},
+  extendedLikesInfo :  {
+    likesCount: {type: Number, required: true},
+    dislikesCount: {type: Number, required: true},
+    //myStatus: {type: String, required: true},
+    statuses: {type: [LikeStatusPostSchema], default: []},
+    newestLikes : {type: [NewestLikesForPostsSchema], default: []}
+  } 
 }); 
 
 const UserSchema = new mongoose.Schema<UsersModel>({
@@ -88,12 +110,8 @@ export type LikeStatusType = {
   createdAt: string
 }
 
-const LikeStatusSchema = new mongoose.Schema<LikeStatusType>({
-  myStatus: {type: String, required: true}, //, enum:LikeStatus 
-  userId: {type:String, required: true},
-  createdAt: {type: String, required: true}
 
-})
+
 
 const CommentSchema = new mongoose.Schema<CommentDB>({
   id:{type:String, required: true },
@@ -102,6 +120,7 @@ const CommentSchema = new mongoose.Schema<CommentDB>({
     userId: {type: String, required: true},
   userLogin: {type: String, required: true}
   },
+  postId: {type: String, required: true},
   createdAt: {type: String, required: true},
   likesInfo: {
     likesCount: {type: Number, required: true},
@@ -201,6 +220,7 @@ export const db : DB = {
     blogId: "1",
     blogName: "string",
     createdAt: "2023-07-13T14:09:36.550Z"
-  }]
+  }
+]
 };
 

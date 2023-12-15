@@ -3,7 +3,7 @@ import { CreateBlogValidation , UpdateBlogValidation } from "../middlewares/blog
 import { BlogsViewDBModel, BlogsViewModel, PaginatedBlog } from "../models/blogsModel";
 import { sendStatus } from "./sendStatus";
 import { authorizationValidation, inputValidationErrors } from "../middlewares/inputvalidationmiddleware";
-import { PaginatedPost, PostViewModel } from "../models/postsModel";
+import { PaginatedPost, PostViewModel, PostViewModel2 } from "../models/postsModel";
 import {  createPostValidationForBlogRouter } from "../middlewares/postsvalidation";
 import { getPaginationFromQuery, getSearchNameTermFromQuery} from "../hellpers/pagination";
 import { BlogService } from "../domain/blogs_service";
@@ -60,8 +60,8 @@ class BlogsController{
       return res.sendStatus(404)
      
     }
-    
-      const blogsCreatePost: PostViewModel | null = await queryRepo.createPostForBlog(req.body.title, req.body.shortDescription, req.body.content, req.params.blogId)
+    const user = req.user
+      const blogsCreatePost: PostViewModel2 | null = await queryRepo.createPostForBlog(req.body.title, req.body.shortDescription, req.body.content, req.params.blogId, user)
       if(blogsCreatePost) {
         return res.status(201).send(blogsCreatePost)
         

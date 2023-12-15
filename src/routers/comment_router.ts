@@ -73,11 +73,12 @@ if(isReactionExist){
           createdAt: new Date().toISOString()
         })
       }
+    }
       
         await commentRepository.updateCommentLikeStatus(existingComment);
 
         return res.sendStatus(204);
-    }
+    
 
     
   }
@@ -110,9 +111,8 @@ if(isReactionExist){
 
   async getCommentById(req: Request, res: Response<commentViewType| undefined >) {
     const user = req.user!
-    console.log('user:', user)
     const foundComment: CommentDB | null = await commentRepository.findCommentById(req.params.commentId)
-    console.log('foundComment:', foundComment)    
+       
       if (foundComment) {
         return res.status(200).send(CommentDB.getViewModel(user, foundComment)) 
       } else {

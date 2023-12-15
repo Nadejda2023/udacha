@@ -1,15 +1,15 @@
 import { WithId } from "mongodb"
-import { CommentModel, PostModel } from "../db/db"
+import { CommentModel, LikeStatusTypePost, PostModel } from "../db/db"
 import { TPagination } from "../hellpers/pagination"
-import { PaginatedPost, PostViewDBModel} from "../models/postsModel"
+import { PaginatedPost, PostViewModel2, PostsDBModels} from "../models/postsModel"
 import { CommentDB, PaginatedCommentViewModel, commentViewModel, commentViewType } from "../models/commentModels"
 import { randomUUID } from "crypto"
 
  export class PostsQueryRepository {
     async findPosts(pagination: TPagination):
-    Promise<PaginatedPost<PostViewDBModel>> {
+    Promise<PaginatedPost<PostViewModel2>> {
        const filter = {name: { $regex :pagination.searchNameTerm, $options: 'i'}}
-       const result : WithId<WithId<PostViewDBModel>>[] = await PostModel.find
+       const result : WithId<WithId<PostViewModel2>>[] = await PostModel.find
        (filter, {projection: {_id: 0}})
    
    .sort({[pagination.sortBy]: pagination.sortDirection})
@@ -27,6 +27,28 @@ import { randomUUID } from "crypto"
        items: result
        }
    }
+   async updatePostLikeStatus(existingPost: PostsDBModels, latestLikes: LikeStatusTypePost[]){
+    console.log(JSON.stringify(existingPost))
+    try {
+        const result = await PostModel.updateOne({ id: existingPost.id }, {
+            $set: {  
+       'extendedLikesInfo.likesCount': existingPost.extendedLikesInfo.likesCount ,
+       'extendedLikesInfo.dislikesCount': existingPost.extendedLikesInfo.dislikesCount,
+       'extendedLikesInfo.myStatus': existingPost.extendedLikesInfo.myStatus,
+       'extendedLikesInfo.newestLikes': latestLikes,
+    }});
+       console.log('result:', result);
+       if (result === undefined) {
+           return undefined;
+         }
+       return result.modifiedCount === 1;
+    } catch (error) {
+        console.error('Error updating post:', error);
+        
+        return undefined;
+  
+      }
+   }
 
    async createPostComment(postId: string, content: string, 
     commentatorInfo: {userId:string, userLogin: string}):
@@ -37,7 +59,7 @@ import { randomUUID } from "crypto"
             content, 
             commentatorInfo,
             createdAt: new Date().toISOString(),
-            //postId,
+            postId,
             likesInfo: {
                 likesCount: 0,
                 dislikesCount: 0,

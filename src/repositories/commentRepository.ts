@@ -37,18 +37,18 @@ import { UsersModel } from "../models/usersModel"
 
     async updateCommentLikeStatus(existingComment: CommentDB): Promise<CommentDB | undefined | boolean> {
         try {
-            console.log('existingComment :', existingComment)
-            // const result = await CommentModel.updateOne({ id: existingComment.id }, {
-            //      $set: {  
-            // 'likesInfo.likesCount': existingComment.likesInfo.likesCount,
-            // 'likesInfo.dislikesCount': existingComment.likesInfo.dislikesCount,
-            // 'likesInfo.statuses': existingComment.likesInfo.statuses } });
-            //console.log('result:', result);
-            // if (result === undefined) {
-            //     return undefined;
-            //   }
-            // return result.modifiedCount === 1;
-            return true
+           
+            const result = await CommentModel.updateOne({ id: existingComment.id }, {
+                 $set: {  
+            'likesInfo.likesCount': existingComment.likesInfo.likesCount,
+            'likesInfo.dislikesCount': existingComment.likesInfo.dislikesCount,
+            'likesInfo.statuses': existingComment.likesInfo.statuses } });
+            
+            if (result === undefined) {
+                return undefined;
+              }
+            return result.modifiedCount === 1;
+          
             
           } catch (error) {
             console.error('Error updating comment:', error);

@@ -32,7 +32,7 @@ export type BlogsViewDBModel = {
      public websiteUrl: string,
      public createdAt: string,
      public isMembership: boolean,
-     ) { }
+     ) {}
     }   
 export type PaginatedBlog<T> = {
     pagesCount: number,
@@ -41,3 +41,12 @@ export type PaginatedBlog<T> = {
     totalCount: number,
      items: T[],
 }
+export type blogsType = {
+    id:  string,
+    name: string,
+    description: string,
+    websiteUrl: string, 
+    createdAt: string,
+    isMembership: boolean 
+  }
+  
